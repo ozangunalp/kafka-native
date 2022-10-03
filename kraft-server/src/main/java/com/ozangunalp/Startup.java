@@ -14,6 +14,7 @@ import com.ozangunalp.metrics.Reporter;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.unchecked.Unchecked;
+import kafka.server.KafkaConfig;
 
 @ApplicationScoped
 public class Startup {
@@ -27,20 +28,19 @@ public class Startup {
         broker = new EmbeddedKafkaBroker()
                 .withDeleteLogDirsOnClose(props.deleteDirsOnClose())
                 .withKafkaPort(props.kafkaPort())
-                .withControllerPort(props.controllerPort());
-        broker.withKafkaHost(props.host().orElse(""));
-        broker.withAdditionalProperties(properties -> {
-            props.logDir().ifPresent(Unchecked.consumer(dir -> {
-                Files.createDirectories(Paths.get(dir));
-                properties.put("log.dir", dir);
-                EmbeddedKafkaBroker.formatStorage(List.of(dir), broker.getClusterId(), broker.getNodeId(), true);
-            }));
-//            properties.put(CommonClientConfigs.AUTO_INCLUDE_JMX_REPORTER_CONFIG, "false");
-            properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
-        });
+                .withControllerPort(props.controllerPort())
+                .withInternalPort(props.internalPort())
+                .withKafkaHost(props.host().orElse(""))
+                .withAdditionalProperties(properties -> {
+                    props.logDir().ifPresent(Unchecked.consumer(dir -> {
+                        Files.createDirectories(Paths.get(dir));
+                        Storage.formatStorage(List.of(dir), broker.getClusterId(), broker.getNodeId(), true);
+                        properties.put(KafkaConfig.LogDirProp(), dir);
+                    }));
+                    properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
+                });
         props.advertisedListeners().ifPresent(listeners -> broker.withAdvertisedListeners(listeners));
         broker.start();
-        System.out.println(broker.getKafkaConfig().effectiveAdvertisedListeners());
     }
 
     void shutdown(@Observes ShutdownEvent event) {

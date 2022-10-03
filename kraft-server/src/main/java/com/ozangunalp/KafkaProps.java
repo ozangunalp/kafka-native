@@ -7,10 +7,13 @@ import io.smallrye.config.WithDefault;
 
 @ConfigMapping(prefix = "kafka")
 public interface KafkaProps {
-    @WithDefault("0")
+    @WithDefault("9092")
     int kafkaPort();
 
-    @WithDefault("0")
+    @WithDefault("9093")
+    int internalPort();
+
+    @WithDefault("9094")
     int controllerPort();
 
     @WithDefault("false")
