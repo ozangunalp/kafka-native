@@ -1,0 +1,10 @@
+name: Kafka Server Extension
+#description: Do something useful.
+metadata:
+  status: "preview"
+  keywords:
+    - kafka-server-extension
+    - kafka-native
+#  guide: ...
+#  categories:
+#    - "miscellaneous"
