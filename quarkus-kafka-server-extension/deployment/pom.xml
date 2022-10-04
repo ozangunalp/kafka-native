@@ -18,7 +18,6 @@
     <dependency>
       <groupId>com.ozangunalp</groupId>
       <artifactId>quarkus-kafka-server</artifactId>
-      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

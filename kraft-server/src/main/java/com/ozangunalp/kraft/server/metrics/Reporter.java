@@ -1,4 +1,4 @@
-package com.ozangunalp.metrics;
+package com.ozangunalp.kraft.server.metrics;
 
 import java.util.List;
 import java.util.Map;

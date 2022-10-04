@@ -1,8 +1,9 @@
-package com.ozangunalp;
+package com.ozangunalp.kraft.server;
+
+import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
 
 import java.io.Closeable;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.Uuid;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.jboss.logging.Logger;
@@ -29,7 +31,7 @@ public class EmbeddedKafkaBroker implements Closeable {
 
     static final Logger LOGGER = Logger.getLogger(EmbeddedKafkaBroker.class.getName());
 
-    static final String KAFKA_PREFIX = "kraft-server";
+    static final String KAFKA_PREFIX = "kraft-server-";
 
     private KafkaRaftServer kafkaServer;
     private KafkaConfig config;
@@ -41,8 +43,8 @@ public class EmbeddedKafkaBroker implements Closeable {
     private int controllerPort = 0;
     private boolean deleteDirsOnClose = true;
     private String clusterId = Uuid.randomUuid().toString();
-    private final List<Endpoint> advertisedListeners = new ArrayList<>();
-    private Consumer<Properties> brokerConfigModifier;
+    private final Properties brokerConfig = new Properties();
+    public SecurityProtocol defaultProtocol = PLAINTEXT;
 
     /**
      * Configure node id for the broker.
@@ -64,7 +66,7 @@ public class EmbeddedKafkaBroker implements Closeable {
      */
     public EmbeddedKafkaBroker withAdditionalProperties(Consumer<Properties> function) {
         assertNotRunning();
-        this.brokerConfigModifier = function;
+        function.accept(this.brokerConfig);
         return this;
     }
 
@@ -150,9 +152,10 @@ public class EmbeddedKafkaBroker implements Closeable {
      * @return this {@link EmbeddedKafkaBroker}
      */
     public EmbeddedKafkaBroker withAdvertisedListeners(Endpoint... endpoints) {
-        assertNotRunning();
-        this.advertisedListeners.addAll(Arrays.asList(endpoints));
-        return this;
+        String advertisedListeners = Arrays.stream(endpoints)
+                .map(Endpoints::toListenerString)
+                .collect(Collectors.joining(","));
+        return withAdvertisedListeners(advertisedListeners);
     }
 
     /**
@@ -165,10 +168,8 @@ public class EmbeddedKafkaBroker implements Closeable {
      */
     public EmbeddedKafkaBroker withAdvertisedListeners(String advertisedListeners) {
         assertNotRunning();
-        String[] listeners = advertisedListeners.split(",");
-        for (String listener : listeners) {
-            this.advertisedListeners.add(Endpoints.parseEndpoint(listener));
-        }
+        this.brokerConfig.compute(KafkaConfig.AdvertisedListenersProp(), 
+                (k, v) -> v == null ? advertisedListeners : v + "," + advertisedListeners);
         return this;
     }
 
@@ -182,19 +183,13 @@ public class EmbeddedKafkaBroker implements Closeable {
             return this;
         }
 
-        Properties defaults = BrokerConfig.createDefaults(nodeId, host, kafkaPort, internalPort, controllerPort, 
-                advertisedListeners);
+        BrokerConfig.defaultStaticConfig(brokerConfig);
+        BrokerConfig.defaultCoreConfig(brokerConfig, nodeId, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
 
-        if (brokerConfigModifier != null) {
-            brokerConfigModifier.accept(defaults);
-        }
-
-        if (defaults.get(KafkaConfig.LogDirProp()) == null) {
-            Storage.createAndSetLogDir(defaults);
-        }
+        Storage.ensureLogDirExists(brokerConfig);
 
         long start = System.currentTimeMillis();
-        this.config = KafkaConfig.fromProps(defaults, false);
+        this.config = KafkaConfig.fromProps(brokerConfig, false);
         Storage.formatStorageFromConfig(config, clusterId, true);
         KafkaRaftServer server = new KafkaRaftServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX));
         server.startup();

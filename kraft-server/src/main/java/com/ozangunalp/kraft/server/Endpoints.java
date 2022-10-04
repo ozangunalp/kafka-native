@@ -1,9 +1,12 @@
-package com.ozangunalp;
+package com.ozangunalp.kraft.server;
 
 import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -31,20 +34,25 @@ public final class Endpoints {
         return new Endpoint(listener, protocol, host, getUnusedPort(port));
     }
 
-    public static Endpoint parseEndpoint(SecurityProtocol protocol, String listenerStr) {
-        Endpoint endpoint = parseEndpoint(listenerStr);
-        return new Endpoint(endpoint.listenerName().orElse(protocol.name), protocol, endpoint.host(), endpoint.port());
+    public static List<Endpoint> parseEndpoints(String listenerStr, SecurityProtocol defaultProtocol) {
+        return Arrays.stream(listenerStr.split(","))
+                .map(s -> parseEndpoint(s, defaultProtocol))
+                .collect(Collectors.toList());
     }
 
-    public static Endpoint parseEndpoint(String listenerStr) {
+    public static Endpoint parseEndpoint(String listenerStr, SecurityProtocol defaultProtocol) {
         String[] parts = listenerStr.split(":");
         if (parts.length == 2) {
-            return new Endpoint(null, PLAINTEXT, parts[0], Integer.parseInt(parts[1]));
+            return new Endpoint(null, defaultProtocol, parts[0], Integer.parseInt(parts[1]));
         } else if (parts.length == 3) {
             String listenerName = parts[0];
             String host = parts[1].replace("//", "");
             int port = Integer.parseInt(parts[2]);
-            return new Endpoint(listenerName, SecurityProtocol.forName(listenerName), host, port);
+            if (SecurityProtocol.names().contains(listenerName)) {
+                return new Endpoint(listenerName, SecurityProtocol.forName(listenerName), host, port);
+            } else {
+                return new Endpoint(listenerName, defaultProtocol, host, port);
+            }
         }
         throw new IllegalArgumentException("Cannot parse listener: " + listenerStr);
     }
@@ -69,7 +77,7 @@ public final class Endpoints {
         return endpoint.listenerName().orElse(endpoint.securityProtocol().name);
     }
 
-    private static int getUnusedPort(int port) {
+    public static int getUnusedPort(int port) {
         if (port != 0) {
             return port;
         }
@@ -79,6 +87,5 @@ public final class Endpoints {
             throw new RuntimeException(e);
         }
     }
-
 
 }

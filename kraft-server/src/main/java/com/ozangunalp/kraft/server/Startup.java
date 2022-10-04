@@ -1,16 +1,13 @@
-package com.ozangunalp;
-
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
+package com.ozangunalp.kraft.server;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.common.utils.Utils;
 
-import com.ozangunalp.metrics.Reporter;
+import com.ozangunalp.kraft.server.metrics.Reporter;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.unchecked.Unchecked;
@@ -32,12 +29,10 @@ public class Startup {
                 .withInternalPort(props.internalPort())
                 .withKafkaHost(props.host().orElse(""))
                 .withAdditionalProperties(properties -> {
-                    props.logDir().ifPresent(Unchecked.consumer(dir -> {
-                        Files.createDirectories(Paths.get(dir));
-                        Storage.formatStorage(List.of(dir), broker.getClusterId(), broker.getNodeId(), true);
-                        properties.put(KafkaConfig.LogDirProp(), dir);
-                    }));
                     properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
+                    props.logDir().ifPresent(dir -> properties.put(KafkaConfig.LogDirProp(), dir));
+                    props.serverProperties().ifPresent(Unchecked.consumer(file -> 
+                            properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
         props.advertisedListeners().ifPresent(listeners -> broker.withAdvertisedListeners(listeners));
         broker.start();

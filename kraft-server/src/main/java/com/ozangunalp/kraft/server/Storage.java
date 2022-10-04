@@ -1,7 +1,5 @@
-package com.ozangunalp;
+package com.ozangunalp.kraft.server;
 
-import static com.ozangunalp.EmbeddedKafkaBroker.KAFKA_PREFIX;
-import static com.ozangunalp.EmbeddedKafkaBroker.LOGGER;
 import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
 
 import java.io.ByteArrayOutputStream;
@@ -9,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -22,13 +21,30 @@ import scala.collection.immutable.Seq;
 import scala.jdk.CollectionConverters;
 
 public final class Storage {
+
+    static final Logger LOGGER = Logger.getLogger(Storage.class.getName());
+
     private Storage() {
     }
 
+    public static void ensureLogDirExists(Properties properties) {
+        String logDir = properties.getProperty(KafkaConfig.LogDirProp());
+        if (logDir != null) {
+            try {
+                Files.createDirectories(Paths.get(logDir));
+            } catch (Throwable throwable) {
+                LOGGER.warnf(throwable, "Error using %s as `log.dir`, setting up a temporary directory.", logDir);
+                Storage.createAndSetLogDir(properties);
+            }
+        } else {
+            Storage.createAndSetLogDir(properties);
+        }
+    }
+    
     public static void createAndSetLogDir(Properties properties) {
         try {
             properties.put(KafkaConfig.LogDirProp(),
-                    Files.createTempDirectory(KAFKA_PREFIX + "-" + UUID.randomUUID()).toString());
+                    Files.createTempDirectory(EmbeddedKafkaBroker.KAFKA_PREFIX + UUID.randomUUID()).toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

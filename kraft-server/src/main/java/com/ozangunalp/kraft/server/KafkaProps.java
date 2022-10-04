@@ -1,5 +1,6 @@
-package com.ozangunalp;
+package com.ozangunalp.kraft.server;
 
+import java.nio.file.Path;
 import java.util.Optional;
 
 import io.smallrye.config.ConfigMapping;
@@ -24,4 +25,6 @@ public interface KafkaProps {
     Optional<String> logDir();
 
     Optional<String> advertisedListeners();
+    
+    Optional<Path> serverProperties();
 }
