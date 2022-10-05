@@ -79,25 +79,26 @@ By default, the `kraft-server` application configures the embedded Kafka Kraft s
 
 Following configuration options are available:
 
-| Key                          | Description                                               | Default            |
-|------------------------------|-----------------------------------------------------------|--------------------|
-| `kafka.kafka-port`           | External listener port                                    | 9092               |
-| `kafka.internal-port`        | Internal listener port                                    | 9093               |
-| `kafka.controller-port`      | Controller listener port                                  | 9094               |
-| `kafka.delete-dirs-on-close` | Whether to delete `log-dir` on application close          | false              |
-| `kafka.cluster-id`           | Provide `cluster-id`, generated if empty                  |                    |
-| `kafka.host`                 | Hostname of listeners                                     | `` (empty string)  |
-| `kafka.log-dir`              | Path to `log-dir` directory, will create the directory if | `./target/log-dir` |
-| `kafka.advertised-listeners` | Override `advertised.listeners`                           |                    |
-| `kafka.server-properties`    | Path to `server.properties` file                          |                    |
+| Key                           | Description                                               | Default            |
+|-------------------------------|-----------------------------------------------------------|--------------------|
+| `server.kafka-port`           | External listener port                                    | 9092               |
+| `server.internal-port`        | Internal listener port                                    | 9093               |
+| `server.controller-port`      | Controller listener port                                  | 9094               |
+| `server.delete-dirs-on-close` | Whether to delete `log-dir` on application close          | false              |
+| `server.host`                 | Hostname of listeners                                     | `` (empty string)  |
+| `server.cluster-id`           | Provide `cluster-id`, generated if empty                  |                    |
+| `server.properties-file`      | Path to `server.properties` file                          |                    |
+| `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if | `./target/log-dir` |
+| `kafka.advertised.listeners`  | Override `advertised.listeners`                           |                    |
+| `kafka.*`                     | Override broker properties                                |                    |
 
 
 You can set configuration options using Java system properties, e.g.
 
 ```shell script
-java -Dkafka.delete-dirs-on-close=true \
-  -Dkafka.server-properties=server.properties \
-  -Dkafka.advertised-listeners=SSL://localhost:9092 -jar ./target/quarkus-app/quarkus-run.jar
+java -Dserver.delete-dirs-on-close=true \
+  -Dserver.properties-file=server.properties \
+  -Dkafka.advertised.listeners=SSL://localhost:9092 -jar ./target/quarkus-app/quarkus-run.jar
 ```
 
 Or environment variables, e.g.
@@ -105,7 +106,7 @@ Or environment variables, e.g.
 ```shell script
 docker run -it --rm -p 19092:9092 \
   -v $(pwd):/conf \
-  -e KAFKA_SERVER_PROPERTIES=/conf/server.properties \
+  -e SERVER_PROPERTIES_FILE=/conf/server.properties \
   -e KAFKA_ADVERTISED_LISTENERS=SASL_PLAINTEXT://localhost:19092 \
   quay.io/ogunalp/kafka-native:1.0.0-SNAPSHOT
 ```

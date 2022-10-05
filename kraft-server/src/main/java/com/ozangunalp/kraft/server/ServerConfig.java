@@ -6,8 +6,9 @@ import java.util.Optional;
 import io.smallrye.config.ConfigMapping;
 import io.smallrye.config.WithDefault;
 
-@ConfigMapping(prefix = "kafka")
-public interface KafkaProps {
+@ConfigMapping(prefix = "server")
+public interface ServerConfig {
+
     @WithDefault("9092")
     int kafkaPort();
 
@@ -21,14 +22,9 @@ public interface KafkaProps {
     boolean deleteDirsOnClose();
 
     Optional<String> clusterId();
-    
-    Optional<Integer> brokerId();
-    
+
     Optional<String> host();
 
-    Optional<String> logDir();
+    Optional<Path> propertiesFile();
 
-    Optional<String> advertisedListeners();
-    
-    Optional<Path> serverProperties();
 }

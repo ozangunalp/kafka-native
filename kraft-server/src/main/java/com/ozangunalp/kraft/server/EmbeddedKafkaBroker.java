@@ -36,7 +36,6 @@ public class EmbeddedKafkaBroker implements Closeable {
     private KafkaRaftServer kafkaServer;
     private KafkaConfig config;
 
-    private int brokerId = 1;
     private String host = "localhost";
     private int kafkaPort = 0;
     private int internalPort = 0;
@@ -47,24 +46,12 @@ public class EmbeddedKafkaBroker implements Closeable {
     public SecurityProtocol defaultProtocol = PLAINTEXT;
 
     /**
-     * Configure node id for the broker.
-     *
-     * @param brokerId the node id.
-     * @return this {@link EmbeddedKafkaBroker}
-     */
-    public EmbeddedKafkaBroker withBrokerId(int brokerId) {
-        assertNotRunning();
-        this.brokerId = brokerId;
-        return this;
-    }
-
-    /**
      * Configure properties for the broker.
      *
      * @param function the config modifier function.
      * @return this {@link EmbeddedKafkaBroker}
      */
-    public EmbeddedKafkaBroker withAdditionalProperties(Consumer<Properties> function) {
+    public EmbeddedKafkaBroker withConfig(Consumer<Properties> function) {
         assertNotRunning();
         function.accept(this.brokerConfig);
         return this;
@@ -183,8 +170,9 @@ public class EmbeddedKafkaBroker implements Closeable {
             return this;
         }
 
+        BrokerConfig.providedConfig(brokerConfig);
         BrokerConfig.defaultStaticConfig(brokerConfig);
-        BrokerConfig.defaultCoreConfig(brokerConfig, brokerId, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
+        BrokerConfig.defaultCoreConfig(brokerConfig, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
 
         Storage.ensureLogDirExists(brokerConfig);
 
@@ -245,10 +233,6 @@ public class EmbeddedKafkaBroker implements Closeable {
     public List<String> getLogDirs() {
         return StreamConverters.asJavaParStream(config.logDirs())
                 .collect(Collectors.toList());
-    }
-
-    public int getBrokerId() {
-        return this.brokerId;
     }
 
     public String getClusterId() {

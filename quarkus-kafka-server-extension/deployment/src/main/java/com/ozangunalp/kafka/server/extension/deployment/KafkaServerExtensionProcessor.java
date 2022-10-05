@@ -89,7 +89,7 @@ class KafkaServerExtensionProcessor {
 
     @BuildStep(onlyIf = IsDevelopment.class)
     RunTimeConfigurationDefaultBuildItem deleteDirsOnClose() {
-        return new RunTimeConfigurationDefaultBuildItem("kafka.delete-dirs-on-close", "true");
+        return new RunTimeConfigurationDefaultBuildItem("server.delete-dirs-on-close", "true");
     }
     
     @BuildStep

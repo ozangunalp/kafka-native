@@ -79,9 +79,9 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         this.exposedPort = getMappedPort(KAFKA_PORT);
         // Start and configure the advertised address
         String cmd = "#!/bin/bash\n/work/kafka";
-        cmd += " -Dkafka.advertised-listeners=" + getBootstrapServers();
+        cmd += " -Dkafka.advertised.listeners=" + getBootstrapServers();
         if (hasServerProperties) {
-            cmd += " -Dkafka.server-properties=" + SERVER_PROPERTIES;
+            cmd += " -Dserver.properties-file=" + SERVER_PROPERTIES;
         }
         if (additionalArgs != null) {
             cmd += " " + additionalArgs;

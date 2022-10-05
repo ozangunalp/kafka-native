@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
 
 import kafka.server.KafkaConfig;
@@ -19,6 +21,8 @@ import kafka.server.KafkaConfig;
 public final class BrokerConfig {
 
     static final Logger LOGGER = Logger.getLogger(BrokerConfig.class.getName());
+
+    final static String CONFIG_PREFIX = "kafka";
 
     private BrokerConfig() {
     }
@@ -38,7 +42,6 @@ public final class BrokerConfig {
      * early.start.listeners
      * <p>
      *
-     * @param brokerId
      * @param host
      * @param kafkaPort
      * @param internalPort
@@ -46,7 +49,7 @@ public final class BrokerConfig {
      * @param defaultProtocol
      * @return
      */
-    public static Properties defaultCoreConfig(Properties props, int brokerId, String host, int kafkaPort,
+    public static Properties defaultCoreConfig(Properties props, String host, int kafkaPort,
             int internalPort, int controllerPort, SecurityProtocol defaultProtocol) {
         Endpoint internal = Endpoints.internal(host, internalPort);
         Endpoint controller = Endpoints.controller(host, controllerPort);
@@ -60,7 +63,11 @@ public final class BrokerConfig {
         }
 
         // Configure node id
-        props.putIfAbsent(KafkaConfig.BrokerIdProp(), Integer.toString(brokerId));
+        String brokerId = props.getProperty(KafkaConfig.BrokerIdProp());
+        if (brokerId == null) {
+            brokerId = "1";
+            props.put(KafkaConfig.BrokerIdProp(), brokerId);
+        }
 
         // Configure kraft
         props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
@@ -147,6 +154,23 @@ public final class BrokerConfig {
         props.putIfAbsent(KafkaConfig.MinInSyncReplicasProp(), "1");
         props.putIfAbsent(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
         props.putIfAbsent(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+        return props;
+    }
+
+    public static Properties providedConfig(Properties props) {
+        Config config = ConfigProvider.getConfig();
+        for (String propertyName : config.getPropertyNames()) {
+            String propertyNameLowerCase = propertyName.toLowerCase();
+            if (!propertyNameLowerCase.startsWith(CONFIG_PREFIX)) {
+                continue;
+            }
+            // Replace _ by . - This is because Kafka properties tend to use . and env variables use _ for every special
+            // character. So, replace _ with .
+            String effectivePropertyName = propertyNameLowerCase.substring(CONFIG_PREFIX.length() + 1).toLowerCase()
+                    .replace("_", ".");
+            String value = config.getValue(propertyName, String.class);
+            props.put(effectivePropertyName, value);
+        }
         return props;
     }
 

@@ -11,32 +11,28 @@ import com.ozangunalp.kraft.server.metrics.Reporter;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.unchecked.Unchecked;
-import kafka.server.KafkaConfig;
 
 @ApplicationScoped
 public class Startup {
 
     @Inject
-    KafkaProps props;
+    ServerConfig config;
 
     private EmbeddedKafkaBroker broker;
 
     void startup(@Observes StartupEvent event) {
         broker = new EmbeddedKafkaBroker()
-                .withDeleteLogDirsOnClose(props.deleteDirsOnClose())
-                .withKafkaPort(props.kafkaPort())
-                .withControllerPort(props.controllerPort())
-                .withInternalPort(props.internalPort())
-                .withKafkaHost(props.host().orElse(""))
-                .withAdditionalProperties(properties -> {
+                .withDeleteLogDirsOnClose(config.deleteDirsOnClose())
+                .withKafkaPort(config.kafkaPort())
+                .withControllerPort(config.controllerPort())
+                .withInternalPort(config.internalPort())
+                .withKafkaHost(config.host().orElse(""))
+                .withConfig(properties -> {
                     properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
-                    props.logDir().ifPresent(dir -> properties.put(KafkaConfig.LogDirProp(), dir));
-                    props.serverProperties().ifPresent(Unchecked.consumer(file -> 
+                    config.propertiesFile().ifPresent(Unchecked.consumer(file -> 
                             properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
-        props.advertisedListeners().ifPresent(listeners -> broker.withAdvertisedListeners(listeners));
-        props.clusterId().ifPresent(id -> broker.withClusterId(id));
-        props.brokerId().ifPresent(id -> broker.withBrokerId(id));
+        config.clusterId().ifPresent(id -> broker.withClusterId(id));
         broker.start();
     }
 
