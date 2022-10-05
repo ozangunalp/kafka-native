@@ -38,7 +38,7 @@ public final class BrokerConfig {
      * early.start.listeners
      * <p>
      *
-     * @param nodeId
+     * @param brokerId
      * @param host
      * @param kafkaPort
      * @param internalPort
@@ -46,7 +46,7 @@ public final class BrokerConfig {
      * @param defaultProtocol
      * @return
      */
-    public static Properties defaultCoreConfig(Properties props, int nodeId, String host, int kafkaPort,
+    public static Properties defaultCoreConfig(Properties props, int brokerId, String host, int kafkaPort,
             int internalPort, int controllerPort, SecurityProtocol defaultProtocol) {
         Endpoint internal = Endpoints.internal(host, internalPort);
         Endpoint controller = Endpoints.controller(host, controllerPort);
@@ -60,11 +60,11 @@ public final class BrokerConfig {
         }
 
         // Configure node id
-        props.putIfAbsent(KafkaConfig.BrokerIdProp(), Integer.toString(nodeId));
+        props.putIfAbsent(KafkaConfig.BrokerIdProp(), Integer.toString(brokerId));
 
         // Configure kraft
         props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        props.putIfAbsent(KafkaConfig.QuorumVotersProp(), nodeId + "@" + controller.host() + ":" + controller.port());
+        props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
 
 
         if (!props.containsKey(KafkaConfig.ControllerListenerNamesProp()) ||

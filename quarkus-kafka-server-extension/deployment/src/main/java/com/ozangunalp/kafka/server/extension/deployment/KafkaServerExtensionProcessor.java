@@ -24,6 +24,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import com.ozangunalp.kafka.server.extension.runtime.JsonPathConfigRecorder;
+import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
@@ -33,6 +34,7 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
+import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageSecurityProviderBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
@@ -85,6 +87,11 @@ class KafkaServerExtensionProcessor {
         return new FeatureBuildItem(FEATURE);
     }
 
+    @BuildStep(onlyIf = IsDevelopment.class)
+    RunTimeConfigurationDefaultBuildItem deleteDirsOnClose() {
+        return new RunTimeConfigurationDefaultBuildItem("kafka.delete-dirs-on-close", "true");
+    }
+    
     @BuildStep
     void index(BuildProducer<IndexDependencyBuildItem> indexDependency) {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka_2.13"));

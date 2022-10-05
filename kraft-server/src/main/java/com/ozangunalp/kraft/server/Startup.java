@@ -35,6 +35,8 @@ public class Startup {
                             properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
         props.advertisedListeners().ifPresent(listeners -> broker.withAdvertisedListeners(listeners));
+        props.clusterId().ifPresent(id -> broker.withClusterId(id));
+        props.brokerId().ifPresent(id -> broker.withBrokerId(id));
         broker.start();
     }
 

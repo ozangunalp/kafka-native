@@ -20,6 +20,10 @@ public interface KafkaProps {
     @WithDefault("false")
     boolean deleteDirsOnClose();
 
+    Optional<String> clusterId();
+    
+    Optional<Integer> brokerId();
+    
     Optional<String> host();
 
     Optional<String> logDir();

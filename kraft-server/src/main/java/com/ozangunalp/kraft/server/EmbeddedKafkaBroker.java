@@ -36,7 +36,7 @@ public class EmbeddedKafkaBroker implements Closeable {
     private KafkaRaftServer kafkaServer;
     private KafkaConfig config;
 
-    private int nodeId = 1;
+    private int brokerId = 1;
     private String host = "localhost";
     private int kafkaPort = 0;
     private int internalPort = 0;
@@ -49,12 +49,12 @@ public class EmbeddedKafkaBroker implements Closeable {
     /**
      * Configure node id for the broker.
      *
-     * @param nodeId the node id.
+     * @param brokerId the node id.
      * @return this {@link EmbeddedKafkaBroker}
      */
-    public EmbeddedKafkaBroker withNodeId(int nodeId) {
+    public EmbeddedKafkaBroker withBrokerId(int brokerId) {
         assertNotRunning();
-        this.nodeId = nodeId;
+        this.brokerId = brokerId;
         return this;
     }
 
@@ -168,7 +168,7 @@ public class EmbeddedKafkaBroker implements Closeable {
      */
     public EmbeddedKafkaBroker withAdvertisedListeners(String advertisedListeners) {
         assertNotRunning();
-        this.brokerConfig.compute(KafkaConfig.AdvertisedListenersProp(), 
+        this.brokerConfig.compute(KafkaConfig.AdvertisedListenersProp(),
                 (k, v) -> v == null ? advertisedListeners : v + "," + advertisedListeners);
         return this;
     }
@@ -184,7 +184,7 @@ public class EmbeddedKafkaBroker implements Closeable {
         }
 
         BrokerConfig.defaultStaticConfig(brokerConfig);
-        BrokerConfig.defaultCoreConfig(brokerConfig, nodeId, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
+        BrokerConfig.defaultCoreConfig(brokerConfig, brokerId, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
 
         Storage.ensureLogDirExists(brokerConfig);
 
@@ -247,8 +247,8 @@ public class EmbeddedKafkaBroker implements Closeable {
                 .collect(Collectors.toList());
     }
 
-    public int getNodeId() {
-        return this.nodeId;
+    public int getBrokerId() {
+        return this.brokerId;
     }
 
     public String getClusterId() {
