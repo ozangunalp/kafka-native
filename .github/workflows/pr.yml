@@ -1,0 +1,25 @@
+---
+name: Continuous Integration Pull Request
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Build with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean package -Dnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
+      - name: Integration Tests with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean verify -Dtest-container
