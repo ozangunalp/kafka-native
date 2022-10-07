@@ -14,7 +14,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer> {
 
     public static final String DEFAULT_REPOSITORY = System.getProperty("kafka-native-container-image", "quay.io/ogunalp/kafka-native");
-    public static final String DEFAULT_VERSION = System.getProperty("kafka-native-container-version", "1.0.0-SNAPSHOT");
+    public static final String DEFAULT_VERSION = System.getProperty("kafka-native-container-version", "latest-snapshot");
     private static final String STARTER_SCRIPT = "/work/run.sh";
     private static final String SERVER_PROPERTIES = "/work/server.properties";
     private static final int KAFKA_PORT = 9092;
