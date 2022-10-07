@@ -41,7 +41,6 @@ class BrokerConfigTest {
         assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER,CONTROLLER");
         assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT");
     }
-
     @Test
     void testOverrideListeners() {
         Properties props = new Properties();
@@ -60,7 +59,7 @@ class BrokerConfigTest {
         assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
         assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL,CONTROLLER:PLAINTEXT");
     }
-    
+
     @Test
     void testMergedSecurityProtocolMap() {
         Properties props = new Properties();
@@ -78,4 +77,39 @@ class BrokerConfigTest {
         assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "JWT:SSL,BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT");
     }
 
+    @Test
+    void testZookeeperEmptyOverride() {
+        Properties props = new Properties();
+        props.put(KafkaConfig.ZkConnectProp(), "localhost:2181");
+        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
+        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
+        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.ProcessRolesProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
+        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
+        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER");
+        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
+    }
+
+    @Test
+    void testZookeeperOverride() {
+        Properties props = new Properties();
+        props.put(KafkaConfig.ZkConnectProp(), "localhost:2181");
+        props.put(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
+        props.put(KafkaConfig.ListenersProp(), "SSL://:9092");
+        props.put(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
+        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL");
+
+        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
+        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
+        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.ProcessRolesProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
+        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "SSL://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
+        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL");
+    }
 }
