@@ -111,6 +111,7 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
     }
 
     @BuildStep
