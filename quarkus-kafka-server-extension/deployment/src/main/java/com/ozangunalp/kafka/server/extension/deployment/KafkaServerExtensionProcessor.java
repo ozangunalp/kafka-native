@@ -111,7 +111,6 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
-        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
     }
 
     @BuildStep
@@ -137,6 +136,15 @@ class KafkaServerExtensionProcessor {
                 "org.keycloak.jose.jwk.JWK",
                 "org.keycloak.json.StringOrArrayDeserializer",
                 "org.keycloak.json.StringListMapDeserializer"));
+    }
+
+    @BuildStep
+    private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
+            BuildProducer<RuntimeInitializedClassBuildItem> producer) {
+        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
+        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
+                "sun.security.provider.ConfigFile",
+                "org.apache.zookeeper.ClientCnxnSocketNIO"));
     }
 
     @BuildStep
