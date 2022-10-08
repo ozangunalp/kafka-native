@@ -1,12 +1,12 @@
 # Kafka Native
 
-Kafka Kraft broker compiled to native using Quarkus and GraalVM.
+Kafka broker compiled to native using Quarkus and GraalVM.
 
 ## Project Structure
 
 - `quarkus-kafka-server-extension`: Quarkus extension including for compiling Kafka Server to native using GraalVM.
-- `kraft-server`: Quarkus application starting a Kafka server in Kraft-mode using the kafka-server-extension. Compiles to JVM and native executable.
-- `kafka-native-test-container`: Test container starting a single-node Kafka broker using the native-compiled kraft-server. Includes integration tests.
+- `kafka-server`: Quarkus application starting a Kafka server using the kafka-server-extension. Compiles to JVM and native executable.
+- `kafka-native-test-container`: Test container starting a single-node Kafka broker using the native-compiled kafka-server. Includes integration tests.
 
 ## Building the project
 
@@ -18,7 +18,7 @@ mvn install
 
 You can run your application in dev mode that enables live coding using:
 ```shell script
-cd kraft-server
+cd kafka-server
 mvn compile quarkus:dev
 ```
 
@@ -27,7 +27,7 @@ Uses `./target/log-dir` as log directory.
 
 ## Packaging and running the application
 
-The application can be packaged using the following on `kraft-server` directory:
+The application can be packaged using the following on `kafka-server` directory:
 ```shell script
 mvn package
 ```
@@ -38,7 +38,7 @@ The application is now runnable using `java -jar target/quarkus-app/quarkus-run.
 
 ## Creating a native executable
 
-You can create a native executable using the following on `kraft-server` directory:
+You can create a native executable using the following on `kafka-server` directory:
 ```shell script
 mvn package -Pnative
 ```
@@ -48,7 +48,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 mvn package -Pnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/kraft-server-1.0.0-SNAPSHOT-runner`
+You can then execute your native executable with: `./target/kafka-server-1.0.0-SNAPSHOT-runner`
 
 ## Creating a container from native executable
 
@@ -75,7 +75,7 @@ docker run -p 19092:9092 -it --rm -e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://loca
 
 ## Configuring the Kafka broker
 
-By default, the `kraft-server` application configures the embedded Kafka Kraft server for a single node cluster.
+By default, the `kafka-server` application configures an embedded Kafka Kraft server for a single node cluster.
 
 Following configuration options are available:
 
@@ -90,6 +90,7 @@ Following configuration options are available:
 | `server.properties-file`      | Path to `server.properties` file                          |                    |
 | `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if | `./target/log-dir` |
 | `kafka.advertised.listeners`  | Override `advertised.listeners`                           |                    |
+| `kafka.zookeeper.connect`     | When configured the kafka broker starts in zookeeper mode | ``                 |
 | `kafka.*`                     | Override broker properties                                |                    |
 
 

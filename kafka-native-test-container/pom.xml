@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>com.ozangunalp</groupId>
-            <artifactId>kraft-server</artifactId>
+            <artifactId>kafka-server</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>

@@ -87,7 +87,7 @@
 
     <modules>
         <module>quarkus-kafka-server-extension</module>
-        <module>kraft-server</module>
+        <module>kafka-server</module>
         <module>kafka-native-test-container</module>
     </modules>
 
@@ -153,7 +153,7 @@
             </dependency>
             <dependency>
                 <groupId>com.ozangunalp</groupId>
-                <artifactId>kraft-server</artifactId>
+                <artifactId>kafka-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
