@@ -139,6 +139,15 @@ class KafkaServerExtensionProcessor {
     }
 
     @BuildStep
+    private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
+            BuildProducer<RuntimeInitializedClassBuildItem> producer) {
+        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
+        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
+                "sun.security.provider.ConfigFile",
+                "org.apache.zookeeper.ClientCnxnSocketNIO"));
+    }
+
+    @BuildStep
     @Record(ExecutionTime.STATIC_INIT)
     void jsonPathconfig(JsonPathConfigRecorder recorder) {
         recorder.setDefaults();

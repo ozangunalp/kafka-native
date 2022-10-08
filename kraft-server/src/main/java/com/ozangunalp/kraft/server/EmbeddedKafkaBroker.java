@@ -10,6 +10,8 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import kafka.server.KafkaServer;
+import kafka.server.Server;
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -33,7 +35,7 @@ public class EmbeddedKafkaBroker implements Closeable {
 
     static final String KAFKA_PREFIX = "kraft-server-";
 
-    private KafkaRaftServer kafkaServer;
+    private Server kafkaServer;
     private KafkaConfig config;
 
     private String host = "localhost";
@@ -178,8 +180,14 @@ public class EmbeddedKafkaBroker implements Closeable {
 
         long start = System.currentTimeMillis();
         this.config = KafkaConfig.fromProps(brokerConfig, false);
-        Storage.formatStorageFromConfig(config, clusterId, true);
-        KafkaRaftServer server = new KafkaRaftServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX));
+        var zkMode = brokerConfig.containsKey(KafkaConfig.ZkConnectProp());
+        Server server;
+        if (zkMode) {
+            server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
+        } else {
+            Storage.formatStorageFromConfig(config, clusterId, true);
+            server = new KafkaRaftServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX));
+        }
         server.startup();
         this.kafkaServer = server;
         LOGGER.infof("Kafka broker started in %d ms with advertised listeners: %s",

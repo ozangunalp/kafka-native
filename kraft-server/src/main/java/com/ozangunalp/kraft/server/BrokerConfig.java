@@ -69,23 +69,34 @@ public final class BrokerConfig {
             props.put(KafkaConfig.BrokerIdProp(), brokerId);
         }
 
-        // Configure kraft
-        props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
 
+        boolean zookeeper = props.containsKey(KafkaConfig.ZkConnectProp());
+        if (!zookeeper) {
+            // Configure kraft
+            props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
+            props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
+        }
 
-        if (!props.containsKey(KafkaConfig.ControllerListenerNamesProp()) ||
-                !props.containsKey(KafkaConfig.InterBrokerListenerNameProp()) ||
-                !props.containsKey(KafkaConfig.ListenersProp())) {
-            // Configure controller listener names
-            props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
-
+        // auto-configure listeners if
+        // - no zookeeper and no controller.listener.names config
+        // - no inter.broker.listener.name config : zookeeper or not
+        // - no listeners config : zookeeper or not
+        if ((!zookeeper && !props.containsKey(KafkaConfig.ControllerListenerNamesProp()))
+                || !props.containsKey(KafkaConfig.InterBrokerListenerNameProp())
+                || !props.containsKey(KafkaConfig.ListenersProp())) {
             // Configure listeners
+            List<String> earlyStartListeners = new ArrayList<>();
+            earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);
+
             Map<String, Endpoint> listeners = advertised.stream()
                     .map(l -> new Endpoint(l.listenerName().orElse(null), l.securityProtocol(), "", kafkaPort))
                     .collect(Collectors.toMap(Endpoints::listenerName, Function.identity()));
+            if (!zookeeper) {
+                earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
+                props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
+                listeners.put(Endpoints.listenerName(controller), controller);
+            }
             listeners.put(Endpoints.listenerName(internal), internal);
-            listeners.put(Endpoints.listenerName(controller), controller);
 
             String listenersString = listeners.values().stream()
                     .map(Endpoints::toListenerString)
@@ -102,8 +113,7 @@ public final class BrokerConfig {
                     mergeSecurityProtocolMap(listeners, (String) v));
 
             // Configure early start listeners
-            props.put(KafkaConfig.EarlyStartListenersProp(),
-                    Endpoints.BROKER_PROTOCOL_NAME + "," + Endpoints.CONTROLLER_PROTOCOL_NAME);
+            props.put(KafkaConfig.EarlyStartListenersProp(), String.join(",", earlyStartListeners));
         } else {
             LOGGER.warnf("Broker configs %s, %s, %s, %s will not be configured automatically, " +
                             "make sure to provide necessary configuration manually.",
@@ -112,7 +122,7 @@ public final class BrokerConfig {
                     KafkaConfig.InterBrokerListenerNameProp(),
                     KafkaConfig.ListenerSecurityProtocolMapProp());
         }
-        
+
         // Configure advertised listeners
         String advertisedListenersString = advertised.stream()
                 .map(Endpoints::toListenerString)
