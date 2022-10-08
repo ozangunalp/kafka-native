@@ -77,10 +77,13 @@ public final class BrokerConfig {
             props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
         }
 
-
-        if (!(props.containsKey(KafkaConfig.ControllerListenerNamesProp()) || zookeeper) ||
-                !props.containsKey(KafkaConfig.InterBrokerListenerNameProp()) ||
-                !props.containsKey(KafkaConfig.ListenersProp())) {
+        // auto-configure listeners if
+        // - no zookeeper and no controller.listener.names config
+        // - no inter.broker.listener.name config : zookeeper or not
+        // - no listeners config : zookeeper or not
+        if ((!zookeeper && !props.containsKey(KafkaConfig.ControllerListenerNamesProp()))
+                || !props.containsKey(KafkaConfig.InterBrokerListenerNameProp())
+                || !props.containsKey(KafkaConfig.ListenersProp())) {
             // Configure listeners
             List<String> earlyStartListeners = new ArrayList<>();
             earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);

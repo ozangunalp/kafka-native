@@ -19,6 +19,7 @@ import org.testcontainers.utility.MountableFile;
 
 import com.ozangunalp.kraft.server.Endpoints;
 import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import io.strimzi.test.container.StrimziZookeeperContainer;
 
 public class KafkaNativeContainerIT {
 
@@ -120,6 +121,19 @@ public class KafkaNativeContainerIT {
                                 " oauth.client.id=\"kafka-client\"" +
                                 " oauth.client.secret=\"kafka-client-secret\"" +
                                 " oauth.token.endpoint.uri=\"http://keycloak:8080/auth/realms/kafka-authz/protocol/openid-connect/token\";"));
+            }
+        }
+    }
+    
+    @Test
+    void testZookeeperContainer() {
+        try (StrimziZookeeperContainer zookeeper = new StrimziZookeeperContainer()) {
+            zookeeper.start();
+            try (var container = new KafkaNativeContainer()
+                    .withNetwork(Network.SHARED)
+                    .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")) {
+                container.start();
+                checkProduceConsume(container);
             }
         }
     }
