@@ -18,7 +18,10 @@ jobs:
       - name: Build with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
-            clean package -Dnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
+            clean package -Dnative \
+            -Dquarkus.native.container-build=true \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.additional-tags=latest-snapshot
       - name: Integration Tests with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \

@@ -22,7 +22,7 @@ jobs:
             clean package -Dnative \
             -Dquarkus.native.container-build=true \
             -Dquarkus.container-image.build=true \
-            -Dquarkus.container-image.tag=${{ github.ref_name }}-${{ github.sha }}
+            -Dquarkus.container-image.tag=${{ github.ref_name }}-${{ github.sha }} \
             -Dquarkus.container-image.additional-tags=latest-snapshot
       - name: Integration Tests with Maven
         run: |
@@ -32,6 +32,6 @@ jobs:
         id: push-to-quay
         uses: redhat-actions/push-to-registry@v2
         with:
-          tags: quay.io/ogunalp/kafka-native:latest-snapshot,quay.io/ogunalp/kafka-native:${{ github.ref_name }}-${{ github.sha }}
+          tags: quay.io/ogunalp/kafka-native:latest-snapshot quay.io/ogunalp/kafka-native:${{ github.ref_name }}-${{ github.sha }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
