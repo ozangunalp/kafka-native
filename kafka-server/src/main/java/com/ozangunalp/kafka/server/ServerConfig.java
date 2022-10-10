@@ -27,4 +27,8 @@ public interface ServerConfig {
 
     Optional<Path> propertiesFile();
 
+    Optional<Path> clusterReadyFlagFile();
+
+    Optional<Integer> clusterReadyNumBrokers();
+
 }

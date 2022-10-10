@@ -45,6 +45,8 @@ public class EmbeddedKafkaBroker implements Closeable {
     private boolean deleteDirsOnClose = true;
     private String clusterId = Uuid.randomUuid().toString();
     private final Properties brokerConfig = new Properties();
+    private Consumer<KafkaConfig> afterBrokerStart = config -> {};
+
     public SecurityProtocol defaultProtocol = PLAINTEXT;
 
     /**
@@ -163,6 +165,18 @@ public class EmbeddedKafkaBroker implements Closeable {
     }
 
     /**
+     * Accepts an action to be performed after the broker is started.
+     *
+     * @param action
+     * @return this {@link EmbeddedKafkaBroker}
+     */
+    public EmbeddedKafkaBroker onBrokerStartup(Consumer<KafkaConfig> action) {
+        assertNotRunning();
+        this.afterBrokerStart = action;
+        return this;
+    }
+
+    /**
      * Create and start the broker.
      *
      * @return this {@link EmbeddedKafkaBroker}
@@ -192,6 +206,8 @@ public class EmbeddedKafkaBroker implements Closeable {
         this.kafkaServer = server;
         LOGGER.infof("Kafka broker started in %d ms with advertised listeners: %s",
                 System.currentTimeMillis() - start, getAdvertisedListeners());
+
+        afterBrokerStart.accept(config);
         return this;
     }
 

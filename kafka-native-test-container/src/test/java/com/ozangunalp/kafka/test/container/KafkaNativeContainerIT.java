@@ -2,7 +2,6 @@ package com.ozangunalp.kafka.test.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -167,13 +166,13 @@ public class KafkaNativeContainerIT {
                     "SERVER_CLUSTER_ID", clusterId,
                     "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
 
-            common.entrySet().stream().forEach(e -> b1.addEnv(e.getKey(), e.getValue()));
+            common.forEach(b1::addEnv);
             b1.withNetworkAliases(broker1);
             b1.withNetwork(network);
             b1.addEnv("SERVER_HOST", broker1);
             b1.addEnv("KAFKA_BROKER_ID", "1");
 
-            common.entrySet().stream().forEach(e -> b2.addEnv(e.getKey(), e.getValue()));
+            common.forEach(b2::addEnv);
             b2.withNetworkAliases(broker2);
             b2.withNetwork(network);
             b2.addEnv("SERVER_HOST", broker2);
@@ -199,13 +198,13 @@ public class KafkaNativeContainerIT {
                     "SERVER_CLUSTER_ID", clusterId,
                     "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
 
-            common.entrySet().stream().forEach(e -> controllerAndBroker.addEnv(e.getKey(), e.getValue()));
+            common.forEach(controllerAndBroker::addEnv);
             controllerAndBroker.withNetworkAliases(broker1);
             controllerAndBroker.withNetwork(network);
             controllerAndBroker.addEnv("SERVER_HOST", broker1);
             controllerAndBroker.addEnv("KAFKA_BROKER_ID", "1");
 
-            common.entrySet().stream().forEach(e -> brokerOnly.addEnv(e.getKey(), e.getValue()));
+            common.forEach(brokerOnly::addEnv);
             brokerOnly.withNetworkAliases(broker2);
             brokerOnly.withNetwork(network);
             brokerOnly.addEnv("SERVER_HOST", broker2);
@@ -216,6 +215,49 @@ public class KafkaNativeContainerIT {
 
             verifyClusterMembers(controllerAndBroker, Map.of(), 2);
             checkProduceConsume(controllerAndBroker);
+        }
+    }
+
+    @Test
+    void testClusterReady() throws Exception {
+        String clusterId = Uuid.randomUuid().toString();
+        String broker1 = "broker1";
+        String broker2 = "broker2";
+        String readyFlagFile = "/tmp/flag";
+        String quorumVotes = String.format("1@%s:9094,2@%s:9094", broker1, broker2);
+        try (var network = Network.newNetwork();
+             var b1 = new KafkaNativeContainer();
+             var b2 = new KafkaNativeContainer()) {
+
+            var common = Map.of(
+                    "SERVER_CLUSTER_ID", clusterId,
+                    "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
+
+            common.forEach(b1::addEnv);
+            b1.withNetworkAliases(broker1);
+            b1.withNetwork(network);
+            b1.addEnv("SERVER_HOST", broker1);
+            b1.addEnv("KAFKA_BROKER_ID", "1");
+            b1.addEnv("SERVER_CLUSTER_READY_FLAG_FILE", readyFlagFile);
+            b1.addEnv("SERVER_CLUSTER_READY_NUM_BROKERS", "2");
+
+            common.forEach(b2::addEnv);
+            b2.withNetworkAliases(broker2);
+            b2.withNetwork(network);
+            b2.addEnv("SERVER_HOST", broker2);
+            b2.addEnv("KAFKA_BROKER_ID", "2");
+
+            Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
+
+            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+                var exit = b1.execInContainer(
+                        "sh", "-c",
+                        String.format("test -f %s", readyFlagFile));
+                assertThat(exit.getExitCode()).isEqualTo(0);
+            });
+
+            verifyClusterMembers(b1, Map.of(), 2);
+            checkProduceConsume(b1);
         }
     }
 
