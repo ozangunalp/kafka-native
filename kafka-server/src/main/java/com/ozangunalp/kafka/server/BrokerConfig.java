@@ -2,12 +2,10 @@ package com.ozangunalp.kafka.server;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -73,48 +71,44 @@ public final class BrokerConfig {
             props.put(KafkaConfig.BrokerIdProp(), brokerId);
         }
 
-
-        boolean zookeeper = props.containsKey(KafkaConfig.ZkConnectProp());
-        if (!zookeeper) {
+        boolean kraft = !props.containsKey(KafkaConfig.ZkConnectProp());
+        boolean kraftController = !props.containsKey(KafkaConfig.ProcessRolesProp()) ||
+                Arrays.asList(props.getProperty(KafkaConfig.ProcessRolesProp()).split(",")).contains("controller");
+        if (kraft) {
             // Configure kraft
             props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
-            props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
+            if (kraftController) {
+                props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
+            }
         }
 
         // auto-configure listeners if
-        // - no zookeeper and no controller.listener.names config
-        // - no inter.broker.listener.name config : zookeeper or not
-        // - no listeners config : zookeeper or not
-        if ((!zookeeper && !props.containsKey(KafkaConfig.ControllerListenerNamesProp()))
-                || !props.containsKey(KafkaConfig.InterBrokerListenerNameProp())
-                || !props.containsKey(KafkaConfig.ListenersProp())) {
+        // - no controller.listener.names config
+        // - no inter.broker.listener.name config
+        // - no listeners config
+        if (!props.containsKey(KafkaConfig.ControllerListenerNamesProp())
+                && !props.containsKey(KafkaConfig.InterBrokerListenerNameProp())
+                && !props.containsKey(KafkaConfig.ListenersProp())) {
             // Configure listeners
             List<String> earlyStartListeners = new ArrayList<>();
             earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);
-
-            Set<String> roles = new HashSet<String>(Arrays.asList(String.valueOf(props.get(KafkaConfig.ProcessRolesProp())).split(",")));
-            boolean kraftController = roles.contains("controller");
 
             Map<String, Endpoint> listeners = advertised.stream()
                     .map(l -> new Endpoint(l.listenerName().orElse(null), l.securityProtocol(), "", kafkaPort))
                     .collect(Collectors.toMap(Endpoints::listenerName, Function.identity()));
             listeners.put(Endpoints.listenerName(internal), internal);
 
-            Map<String, Endpoint> mapListeners = new TreeMap<>(listeners);
-            if (!zookeeper) {
+            Map<String, Endpoint> securityProtocolMapListeners = new TreeMap<>(listeners);
+            if (kraft) {
                 if (kraftController) {
                     earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
                     listeners.put(Endpoints.listenerName(controller), controller);
                 }
-                mapListeners.put(Endpoints.listenerName(controller), controller);
+                securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
                 props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
             }
 
-            String listenersString = listeners.values().stream()
-                    .map(Endpoints::toListenerString)
-                    .distinct()
-                    .collect(Collectors.joining(","));
-            props.put(KafkaConfig.ListenersProp(), listenersString);
+            props.put(KafkaConfig.ListenersProp(), joinListeners(listeners.values()));
 
             // Configure internal listener
             props.put(KafkaConfig.InterBrokerListenerNameProp(), Endpoints.listenerName(internal));
@@ -122,7 +116,7 @@ public final class BrokerConfig {
 
             // Configure security protocol map, by respecting existing map
             props.compute(KafkaConfig.ListenerSecurityProtocolMapProp(), (k, v) ->
-                    mergeSecurityProtocolMap(mapListeners, (String) v));
+                    mergeSecurityProtocolMap(securityProtocolMapListeners, (String) v));
 
             // Configure early start listeners
             props.put(KafkaConfig.EarlyStartListenersProp(), String.join(",", earlyStartListeners));
@@ -136,13 +130,16 @@ public final class BrokerConfig {
         }
 
         // Configure advertised listeners
-        String advertisedListenersString = advertised.stream()
+        props.put(KafkaConfig.AdvertisedListenersProp(), joinListeners(advertised));
+
+        return props;
+    }
+
+    private static String joinListeners(Collection<Endpoint> endpoints) {
+        return endpoints.stream()
                 .map(Endpoints::toListenerString)
                 .distinct()
                 .collect(Collectors.joining(","));
-        props.put(KafkaConfig.AdvertisedListenersProp(), advertisedListenersString);
-
-        return props;
     }
 
     private static String mergeSecurityProtocolMap(Map<String, Endpoint> listeners, String current) {
