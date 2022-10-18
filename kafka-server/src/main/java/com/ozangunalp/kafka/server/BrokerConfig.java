@@ -2,9 +2,13 @@ package com.ozangunalp.kafka.server;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,15 +92,23 @@ public final class BrokerConfig {
             List<String> earlyStartListeners = new ArrayList<>();
             earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);
 
+            Set<String> roles = new HashSet<String>(Arrays.asList(String.valueOf(props.get(KafkaConfig.ProcessRolesProp())).split(",")));
+            boolean kraftController = roles.contains("controller");
+
             Map<String, Endpoint> listeners = advertised.stream()
                     .map(l -> new Endpoint(l.listenerName().orElse(null), l.securityProtocol(), "", kafkaPort))
                     .collect(Collectors.toMap(Endpoints::listenerName, Function.identity()));
-            if (!zookeeper) {
-                earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
-                props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
-                listeners.put(Endpoints.listenerName(controller), controller);
-            }
             listeners.put(Endpoints.listenerName(internal), internal);
+
+            Map<String, Endpoint> mapListeners = new TreeMap<>(listeners);
+            if (!zookeeper) {
+                if (kraftController) {
+                    earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
+                    listeners.put(Endpoints.listenerName(controller), controller);
+                }
+                mapListeners.put(Endpoints.listenerName(controller), controller);
+                props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
+            }
 
             String listenersString = listeners.values().stream()
                     .map(Endpoints::toListenerString)
@@ -110,7 +122,7 @@ public final class BrokerConfig {
 
             // Configure security protocol map, by respecting existing map
             props.compute(KafkaConfig.ListenerSecurityProtocolMapProp(), (k, v) ->
-                    mergeSecurityProtocolMap(listeners, (String) v));
+                    mergeSecurityProtocolMap(mapListeners, (String) v));
 
             // Configure early start listeners
             props.put(KafkaConfig.EarlyStartListenersProp(), String.join(",", earlyStartListeners));

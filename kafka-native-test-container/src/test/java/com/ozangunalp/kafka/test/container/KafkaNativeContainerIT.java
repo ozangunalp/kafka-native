@@ -1,20 +1,26 @@
 package com.ozangunalp.kafka.test.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.testcontainers.containers.Network;
+import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.MountableFile;
 
 import com.ozangunalp.kafka.server.Endpoints;
@@ -49,6 +55,15 @@ public class KafkaNativeContainerIT {
                     .count()).isEqualTo(100L);
         } catch (Throwable throwable) {
             throw new AssertionError("Kafka container is not in good health, logs : " + container.getLogs(), throwable);
+        }
+    }
+
+    void verifyClusterMembers(KafkaNativeContainer container, Map<String, Object> configs, int expected) {
+        try (KafkaCompanion companion = new KafkaCompanion(container.getBootstrapServers())) {
+            companion.setCommonClientConfig(configs);
+
+            DescribeClusterResult describeClusterResult = companion.getOrCreateAdminClient().describeCluster();
+            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(describeClusterResult.nodes().get().size()).isEqualTo(expected));
         }
     }
 
@@ -137,4 +152,71 @@ public class KafkaNativeContainerIT {
             }
         }
     }
+
+    @Test
+    void testKraftClusterBothControllers() throws Exception {
+        String clusterId = Uuid.randomUuid().toString();
+        String broker1 = "broker1";
+        String broker2 = "broker2";
+        String quorumVotes = String.format("1@%s:9094,2@%s:9094", broker1, broker2);
+        try (var network = Network.newNetwork();
+             var b1 = new KafkaNativeContainer();
+             var b2 = new KafkaNativeContainer()) {
+
+            var common = Map.of(
+                    "SERVER_CLUSTER_ID", clusterId,
+                    "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
+
+            common.entrySet().stream().forEach(e -> b1.addEnv(e.getKey(), e.getValue()));
+            b1.withNetworkAliases(broker1);
+            b1.withNetwork(network);
+            b1.addEnv("SERVER_HOST", broker1);
+            b1.addEnv("KAFKA_BROKER_ID", "1");
+
+            common.entrySet().stream().forEach(e -> b2.addEnv(e.getKey(), e.getValue()));
+            b2.withNetworkAliases(broker2);
+            b2.withNetwork(network);
+            b2.addEnv("SERVER_HOST", broker2);
+            b2.addEnv("KAFKA_BROKER_ID", "2");
+
+            Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
+
+            verifyClusterMembers(b1, Map.of(), 2);
+            checkProduceConsume(b1);
+        }
+    }
+    @Test
+    void testKraftClusterOneController() throws Exception {
+        String clusterId = Uuid.randomUuid().toString();
+        String broker1 = "broker1";
+        String broker2 = "broker2";
+        String quorumVotes = String.format("1@%s:9094", broker1);
+        try (var network = Network.newNetwork();
+             var controllerAndBroker = new KafkaNativeContainer();
+             var brokerOnly = new KafkaNativeContainer()) {
+
+            var common = Map.of(
+                    "SERVER_CLUSTER_ID", clusterId,
+                    "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
+
+            common.entrySet().stream().forEach(e -> controllerAndBroker.addEnv(e.getKey(), e.getValue()));
+            controllerAndBroker.withNetworkAliases(broker1);
+            controllerAndBroker.withNetwork(network);
+            controllerAndBroker.addEnv("SERVER_HOST", broker1);
+            controllerAndBroker.addEnv("KAFKA_BROKER_ID", "1");
+
+            common.entrySet().stream().forEach(e -> brokerOnly.addEnv(e.getKey(), e.getValue()));
+            brokerOnly.withNetworkAliases(broker2);
+            brokerOnly.withNetwork(network);
+            brokerOnly.addEnv("SERVER_HOST", broker2);
+            brokerOnly.addEnv("KAFKA_BROKER_ID", "2");
+            brokerOnly.addEnv("KAFKA_PROCESS_ROLES", "broker");
+
+            Startables.deepStart(controllerAndBroker, brokerOnly).get(30, TimeUnit.SECONDS);
+
+            verifyClusterMembers(controllerAndBroker, Map.of(), 2);
+            checkProduceConsume(controllerAndBroker);
+        }
+    }
+
 }
