@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.SaslConfigs;
@@ -76,10 +75,12 @@ public class KafkaNativeContainerIT {
     void verifyClusterMembers(KafkaNativeContainer container, Map<String, Object> configs, int expected) {
         try (KafkaCompanion companion = new KafkaCompanion(container.getBootstrapServers())) {
             companion.setCommonClientConfig(configs);
-
-            DescribeClusterResult describeClusterResult = companion.getOrCreateAdminClient().describeCluster();
-            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(describeClusterResult.nodes().get().size()).isEqualTo(expected));
+            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getClusterSize(companion)).isEqualTo(expected));
         }
+    }
+
+    private static int getClusterSize(KafkaCompanion companion) throws Exception {
+        return companion.getOrCreateAdminClient().describeCluster().nodes().get().size();
     }
 
     @Test
