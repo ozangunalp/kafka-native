@@ -66,6 +66,7 @@
                                 <configuration>
                                     <systemPropertyVariables>
                                         <jdk.net.hosts.file>target/hosts</jdk.net.hosts.file>
+                                        <container.logs.dir>${build.directory}/container-logs/</container.logs.dir>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>

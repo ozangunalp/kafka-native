@@ -26,3 +26,10 @@ jobs:
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
             clean verify -Dtest-container
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-logs
+          retention-days: 3
+          path: kafka-native-test-container/target/container-logs/**/*.log

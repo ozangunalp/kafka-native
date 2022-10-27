@@ -2,10 +2,10 @@ package com.ozangunalp.kafka.test.container;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +16,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
@@ -30,6 +31,20 @@ import io.strimzi.test.container.StrimziZookeeperContainer;
 public class KafkaNativeContainerIT {
 
     public String topic;
+    private TestInfo testInfo;
+    private OffsetDateTime startTime;
+
+    @BeforeEach
+    void init(TestInfo testInfo) {
+        this.testInfo = testInfo;
+        this.startTime = OffsetDateTime.now();
+
+    }
+
+    @NotNull
+    private KafkaNativeContainer createKafkaNativeContainer() {
+        return new KafkaNativeContainer().withName(String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), startTime));
+    }
 
     @BeforeEach
     public void initTopic(TestInfo testInfo) {
@@ -41,7 +56,7 @@ public class KafkaNativeContainerIT {
     void checkProduceConsume(KafkaNativeContainer container) {
         checkProduceConsume(container, Map.of());
     }
-    
+
     void checkProduceConsume(KafkaNativeContainer container, Map<String, Object> configs) {
         try (KafkaCompanion companion = new KafkaCompanion(container.getBootstrapServers())) {
             companion.setCommonClientConfig(configs);
@@ -69,7 +84,7 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testSimpleContainer() {
-        try (var container = new KafkaNativeContainer()) {
+        try (var container = createKafkaNativeContainer()) {
             container.start();
             checkProduceConsume(container);
         }
@@ -78,7 +93,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testFixedPortContainer() {
         int unusedPort = Endpoints.getUnusedPort(0);
-        try (var container = new KafkaNativeContainer().withPort(unusedPort)) {
+        try (var container = createKafkaNativeContainer().withPort(unusedPort)) {
             container.start();
             assertThat(container.getBootstrapServers()).contains("" + unusedPort);
             checkProduceConsume(container);
@@ -87,7 +102,7 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testSaslContainer() {
-        try (var container = new KafkaNativeContainer()
+        try (var container = createKafkaNativeContainer()
                 .withServerProperties(MountableFile.forClasspathResource("sasl_plaintext.properties"))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             container.start();
@@ -100,7 +115,7 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testSslContainer() {
-        try (var container = new KafkaNativeContainer()
+        try (var container = createKafkaNativeContainer()
                 .withServerProperties(MountableFile.forClasspathResource("ssl.properties"))
                 .withAdvertisedListeners(c -> String.format("SSL://%s:%s", c.getHost(), c.getExposedKafkaPort()))
                 .withCopyFileToContainer(MountableFile.forClasspathResource("kafka-keystore.p12"), "/dir/kafka-keystore.p12")
@@ -121,7 +136,7 @@ public class KafkaNativeContainerIT {
         try (KeycloakContainer keycloak = new KeycloakContainer()) {
             keycloak.start();
             keycloak.createHostsFile();
-            try (var container = new KafkaNativeContainer()
+            try (var container = createKafkaNativeContainer()
                     .withNetworkAliases("kafka")
                     .withNetwork(Network.SHARED)
                     .withServerProperties(MountableFile.forClasspathResource("oauth.properties"))
@@ -139,12 +154,12 @@ public class KafkaNativeContainerIT {
             }
         }
     }
-    
+
     @Test
     void testZookeeperContainer() {
         try (StrimziZookeeperContainer zookeeper = new StrimziZookeeperContainer()) {
             zookeeper.start();
-            try (var container = new KafkaNativeContainer()
+            try (var container = createKafkaNativeContainer()
                     .withNetwork(Network.SHARED)
                     .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")) {
                 container.start();
@@ -160,8 +175,8 @@ public class KafkaNativeContainerIT {
         String broker2 = "broker2";
         String quorumVotes = String.format("1@%s:9094,2@%s:9094", broker1, broker2);
         try (var network = Network.newNetwork();
-             var b1 = new KafkaNativeContainer();
-             var b2 = new KafkaNativeContainer()) {
+             var b1 = createKafkaNativeContainer();
+             var b2 = createKafkaNativeContainer()) {
 
             var common = Map.of(
                     "SERVER_CLUSTER_ID", clusterId,
@@ -192,8 +207,8 @@ public class KafkaNativeContainerIT {
         String broker2 = "broker2";
         String quorumVotes = String.format("1@%s:9094", broker1);
         try (var network = Network.newNetwork();
-             var controllerAndBroker = new KafkaNativeContainer();
-             var brokerOnly = new KafkaNativeContainer()) {
+             var controllerAndBroker = createKafkaNativeContainer();
+             var brokerOnly = createKafkaNativeContainer()) {
 
             var common = Map.of(
                     "SERVER_CLUSTER_ID", clusterId,
