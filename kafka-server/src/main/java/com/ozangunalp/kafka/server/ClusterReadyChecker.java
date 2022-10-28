@@ -34,7 +34,7 @@ public class ClusterReadyChecker {
                         return null;
                     }
                 } finally {
-                    if (!result.isCancelled()) {
+                    if (!result.isDone()) {
                         scheduledExecutorService.schedule(this, 200L, TimeUnit.MILLISECONDS);
                     }
                 }
