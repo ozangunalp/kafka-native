@@ -1,13 +1,18 @@
 package com.ozangunalp.kafka.test.container;
 
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.MountableFile;
 
 public class KeycloakContainer extends FixedHostPortGenericContainer<KeycloakContainer> {
+
+    private String name;
 
     public KeycloakContainer() {
         super("quay.io/keycloak/keycloak:16.1.1");
@@ -35,8 +40,20 @@ public class KeycloakContainer extends FixedHostPortGenericContainer<KeycloakCon
                 fileWriter.write(dockerHost + " keycloak");
             }
             fileWriter.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
+    }
+
+    @Override
+    protected void containerIsStarting(InspectContainerResponse containerInfo) {
+        super.containerIsStarting(containerInfo);
+
+        ContainerUtils.recordContainerOutput(name, this);
+    }
+
+    public KeycloakContainer withName(String name) {
+        this.name = name;
+        return this;
     }
 }

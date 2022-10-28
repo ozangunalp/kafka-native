@@ -30,19 +30,20 @@ import io.strimzi.test.container.StrimziZookeeperContainer;
 public class KafkaNativeContainerIT {
 
     public String topic;
-    private TestInfo testInfo;
-    private OffsetDateTime startTime;
+    private String testOutputName;
 
     @BeforeEach
     void init(TestInfo testInfo) {
-        this.testInfo = testInfo;
-        this.startTime = OffsetDateTime.now();
-
+        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), OffsetDateTime.now());
     }
 
     @NotNull
     private KafkaNativeContainer createKafkaNativeContainer() {
-        return new KafkaNativeContainer().withName(String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), startTime));
+        return new KafkaNativeContainer().withName(testOutputName);
+    }
+    @NotNull
+    private KeycloakContainer getKeycloakContainer() {
+        return new KeycloakContainer().withName(testOutputName);
     }
 
     @BeforeEach
@@ -134,7 +135,7 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testOAuthContainer() {
-        try (KeycloakContainer keycloak = new KeycloakContainer()) {
+        try (KeycloakContainer keycloak = getKeycloakContainer()) {
             keycloak.start();
             keycloak.createHostsFile();
             try (var container = createKafkaNativeContainer()
@@ -158,7 +159,8 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testZookeeperContainer() {
-        try (StrimziZookeeperContainer zookeeper = new StrimziZookeeperContainer()) {
+        try (ZookeeperContainer zookeeper = new ZookeeperContainer()) {
+            zookeeper.withName(testOutputName);
             zookeeper.start();
             try (var container = createKafkaNativeContainer()
                     .withNetwork(Network.SHARED)

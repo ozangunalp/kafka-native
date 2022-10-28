@@ -1,15 +1,9 @@
 package com.ozangunalp.kafka.test.container;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
@@ -99,30 +93,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
                 Transferable.of(cmd.getBytes(StandardCharsets.UTF_8), 0777),
                 STARTER_SCRIPT);
 
-        Optional.ofNullable(System.getProperty("container.logs.dir")).ifPresent(logDir -> {
-            var target = Path.of(logDir);
-            if (name != null) {
-                target = target.resolve(name);
-            }
-            target = target.resolve(String.format("%s.%s.%s", getContainerName().replaceFirst(File.separator, ""), getContainerId(), "log"));
-            target.getParent().toFile().mkdirs();
-            try {
-                var writer = new FileWriter(target.toFile());
-                super.followOutput(outputFrame -> {
-                    try {
-                        if (outputFrame.equals(OutputFrame.END)) {
-                            writer.close();
-                        } else {
-                            writer.write(outputFrame.getUtf8String());
-                        }
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                });
-            } catch (IOException e) {
-                logger().warn("Failed to create container log file: {}", target);
-            }
-        });
+        ContainerUtils.recordContainerOutput(name, this);
     }
 
     public static String defaultAdvertisedAddresses(KafkaNativeContainer container) {
