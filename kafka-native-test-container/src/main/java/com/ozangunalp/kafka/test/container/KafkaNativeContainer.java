@@ -1,9 +1,11 @@
 package com.ozangunalp.kafka.test.container;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.DockerImageName;
@@ -18,13 +20,13 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
     private static final String STARTER_SCRIPT = "/work/run.sh";
     private static final String SERVER_PROPERTIES = "/work/server.properties";
     private static final int KAFKA_PORT = 9092;
-    
+
     // dynamic config
     private boolean hasServerProperties = false;
     private Function<KafkaNativeContainer, String> advertisedListenersProvider = KafkaNativeContainer::defaultAdvertisedAddresses;
     private String additionalArgs = null;
     private int exposedPort = -1;
-    private String name = null;
+    private Function<GenericContainer<?>, Consumer<OutputFrame>> outputFrameConsumer;
 
     public static DockerImageName imageName(String version) {
         return DockerImageName.parse(DEFAULT_REPOSITORY + ":" + version);
@@ -37,7 +39,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
     public KafkaNativeContainer() {
         this(imageName());
     }
-    
+
     public KafkaNativeContainer(DockerImageName dockerImageName) {
         super(dockerImageName);
         super.addExposedPort(9092);
@@ -45,7 +47,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         super.withCommand("sh", "-c", cmd);
         super.waitingFor(Wait.forLogMessage(".*Kafka broker started.*", 1));
     }
-    
+
     public KafkaNativeContainer withPort(int fixedPort) {
         assertNotRunning();
         if (fixedPort <= 0) {
@@ -54,6 +56,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         addFixedExposedPort(fixedPort, KAFKA_PORT);
         return self();
     }
+
     public KafkaNativeContainer withServerProperties(MountableFile serverPropertiesFile) {
         assertNotRunning();
         super.withCopyFileToContainer(serverPropertiesFile, SERVER_PROPERTIES);
@@ -73,11 +76,20 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         return self();
     }
 
+    public KafkaNativeContainer withFollowOutput(Function<GenericContainer<?>, Consumer<OutputFrame>> outputFrameConsumer) {
+        this.outputFrameConsumer = outputFrameConsumer;
+        return self();
+    }
+
     @Override
     protected void containerIsStarting(InspectContainerResponse containerInfo, boolean reused) {
         super.containerIsStarting(containerInfo, reused);
         // Set exposed port
         this.exposedPort = getMappedPort(KAFKA_PORT);
+        // follow output
+        if (outputFrameConsumer != null) {
+            followOutput(outputFrameConsumer.apply(this));
+        }
         // Start and configure the advertised address
         String cmd = "#!/bin/bash\n/work/kafka";
         cmd += " -Dkafka.advertised.listeners=" + getBootstrapServers();
@@ -87,13 +99,11 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         if (additionalArgs != null) {
             cmd += " " + additionalArgs;
         }
-        
+
         //noinspection OctalInteger
         copyFileToContainer(
                 Transferable.of(cmd.getBytes(StandardCharsets.UTF_8), 0777),
                 STARTER_SCRIPT);
-
-        ContainerUtils.recordContainerOutput(name, this);
     }
 
     public static String defaultAdvertisedAddresses(KafkaNativeContainer container) {
@@ -114,8 +124,4 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         }
     }
 
-    public KafkaNativeContainer withName(String name) {
-        this.name = name;
-        return this;
-    }
 }

@@ -31,24 +31,23 @@ public class KafkaNativeContainerIT {
     public String topic;
     private String testOutputName;
 
-    @BeforeEach
-    void init(TestInfo testInfo) {
-        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), OffsetDateTime.now());
+    @NotNull
+    private KafkaNativeContainer createKafkaNativeContainer() {
+        return new KafkaNativeContainer()
+                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c));
     }
 
     @NotNull
-    private KafkaNativeContainer createKafkaNativeContainer() {
-        return new KafkaNativeContainer().withName(testOutputName);
-    }
-    @NotNull
-    private KeycloakContainer getKeycloakContainer() {
-        return new KeycloakContainer().withName(testOutputName);
+    private KafkaNativeContainer createKafkaNativeContainer(String containerName) {
+        return new KafkaNativeContainer()
+                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c, containerName));
     }
 
     @BeforeEach
     public void initTopic(TestInfo testInfo) {
         String cn = testInfo.getTestClass().map(Class::getSimpleName).orElse(UUID.randomUUID().toString());
         String mn = testInfo.getTestMethod().map(Method::getName).orElse(UUID.randomUUID().toString());
+        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), OffsetDateTime.now());
         topic = cn + "-" + mn + "-" + UUID.randomUUID().getMostSignificantBits();
     }
 
@@ -75,12 +74,9 @@ public class KafkaNativeContainerIT {
     void verifyClusterMembers(KafkaNativeContainer container, Map<String, Object> configs, int expected) {
         try (KafkaCompanion companion = new KafkaCompanion(container.getBootstrapServers())) {
             companion.setCommonClientConfig(configs);
-            await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getClusterSize(companion)).isEqualTo(expected));
+            await().atMost(30, TimeUnit.SECONDS)
+                    .untilAsserted(() -> assertThat(companion.cluster().nodes().size()).isEqualTo(expected));
         }
-    }
-
-    private static int getClusterSize(KafkaCompanion companion) throws Exception {
-        return companion.getOrCreateAdminClient().describeCluster().nodes().get().size();
     }
 
     @Test
@@ -134,8 +130,9 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testOAuthContainer() {
-        try (KeycloakContainer keycloak = getKeycloakContainer()) {
+        try (KeycloakContainer keycloak = new KeycloakContainer()) {
             keycloak.start();
+            keycloak.followOutput(new ToFileConsumer(testOutputName, keycloak));
             keycloak.createHostsFile();
             try (var container = createKafkaNativeContainer()
                     .withNetworkAliases("kafka")
@@ -159,6 +156,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testZookeeperContainer() {
         try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
+                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))
                 .withNetwork(Network.SHARED)
                 .withNetworkAliases("zookeeper")) {
             zookeeper.start();
@@ -178,20 +176,20 @@ public class KafkaNativeContainerIT {
         String broker2 = "broker2";
         String quorumVotes = String.format("1@%s:9094,2@%s:9094", broker1, broker2);
         try (var network = Network.newNetwork();
-             var b1 = createKafkaNativeContainer();
-             var b2 = createKafkaNativeContainer()) {
+             var b1 = createKafkaNativeContainer(broker1);
+             var b2 = createKafkaNativeContainer(broker2)) {
 
             var common = Map.of(
                     "SERVER_CLUSTER_ID", clusterId,
                     "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
 
-            common.entrySet().stream().forEach(e -> b1.addEnv(e.getKey(), e.getValue()));
+            common.forEach(b1::addEnv);
             b1.withNetworkAliases(broker1);
             b1.withNetwork(network);
             b1.addEnv("SERVER_HOST", broker1);
             b1.addEnv("KAFKA_BROKER_ID", "1");
 
-            common.entrySet().stream().forEach(e -> b2.addEnv(e.getKey(), e.getValue()));
+            common.forEach(b2::addEnv);
             b2.withNetworkAliases(broker2);
             b2.withNetwork(network);
             b2.addEnv("SERVER_HOST", broker2);
@@ -203,6 +201,7 @@ public class KafkaNativeContainerIT {
             checkProduceConsume(b1);
         }
     }
+
     @Test
     void testKraftClusterOneController() throws Exception {
         String clusterId = Uuid.randomUuid().toString();
@@ -210,20 +209,20 @@ public class KafkaNativeContainerIT {
         String broker2 = "broker2";
         String quorumVotes = String.format("1@%s:9094", broker1);
         try (var network = Network.newNetwork();
-             var controllerAndBroker = createKafkaNativeContainer();
-             var brokerOnly = createKafkaNativeContainer()) {
+             var controllerAndBroker = createKafkaNativeContainer(broker1);
+             var brokerOnly = createKafkaNativeContainer(broker2)) {
 
             var common = Map.of(
                     "SERVER_CLUSTER_ID", clusterId,
                     "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
 
-            common.entrySet().stream().forEach(e -> controllerAndBroker.addEnv(e.getKey(), e.getValue()));
+            common.forEach(controllerAndBroker::addEnv);
             controllerAndBroker.withNetworkAliases(broker1);
             controllerAndBroker.withNetwork(network);
             controllerAndBroker.addEnv("SERVER_HOST", broker1);
             controllerAndBroker.addEnv("KAFKA_BROKER_ID", "1");
 
-            common.entrySet().stream().forEach(e -> brokerOnly.addEnv(e.getKey(), e.getValue()));
+            common.forEach(brokerOnly::addEnv);
             brokerOnly.withNetworkAliases(broker2);
             brokerOnly.withNetwork(network);
             brokerOnly.addEnv("SERVER_HOST", broker2);
