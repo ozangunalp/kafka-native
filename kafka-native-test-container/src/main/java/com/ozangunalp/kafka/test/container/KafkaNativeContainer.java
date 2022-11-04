@@ -24,6 +24,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
     private Function<KafkaNativeContainer, String> advertisedListenersProvider = KafkaNativeContainer::defaultAdvertisedAddresses;
     private String additionalArgs = null;
     private int exposedPort = -1;
+    private String name = null;
 
     public static DockerImageName imageName(String version) {
         return DockerImageName.parse(DEFAULT_REPOSITORY + ":" + version);
@@ -91,6 +92,8 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         copyFileToContainer(
                 Transferable.of(cmd.getBytes(StandardCharsets.UTF_8), 0777),
                 STARTER_SCRIPT);
+
+        ContainerUtils.recordContainerOutput(name, this);
     }
 
     public static String defaultAdvertisedAddresses(KafkaNativeContainer container) {
@@ -110,5 +113,9 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
             throw new IllegalStateException("Configuration of the running broker is not permitted.");
         }
     }
-    
+
+    public KafkaNativeContainer withName(String name) {
+        this.name = name;
+        return this;
+    }
 }
