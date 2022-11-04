@@ -1,4 +1,4 @@
-# Kafka/Zookpper Native
+# Kafka Native
 
 Kafka broker (and Zookeeper) compiled to native using Quarkus and GraalVM.
 
@@ -48,7 +48,7 @@ Be aware that it’s not an _über-jar_ as the dependencies are copied into the 
 
 The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
 
-## Creating a native executables
+## Creating native executables
 
 You can create a native executable using the following either the `kafka-server` (or `zookeeper-server`) directory:
 ```shell script

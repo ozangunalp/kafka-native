@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
 import org.apache.zookeeper.server.ServerCnxnFactory;
 import org.apache.zookeeper.server.ZooKeeperServer;
@@ -22,7 +19,6 @@ public class EmbeddedZookeeperServer implements Closeable {
     static final Logger LOGGER = Logger.getLogger(EmbeddedZookeeperServer.class.getName());
 
     private int zookeeperPort = 0;
-    private Optional<Path> zookeeperReadyFlagFile = Optional.empty();
     private ServerCnxnFactory zooFactory;
     private ZooKeeperServer zooServer;
 
@@ -62,19 +58,6 @@ public class EmbeddedZookeeperServer implements Closeable {
 
             LOGGER.infof("Zookeeper server started in %d ms", System.currentTimeMillis() - start);
 
-            zookeeperReadyFlagFile.ifPresent(path -> {
-                CompletionStage<Void> awaitCluster = ZookeeperPoller.awaitZookeeperServerReady("localhost:" + zookeeperPort);
-                awaitCluster.thenRunAsync(() -> {
-                    try {
-                        path.getParent().toFile().mkdirs();
-                        path.toFile().createNewFile();
-                        LOGGER.infof("Zookeeper server ready for commands", System.currentTimeMillis() - start);
-                    } catch (IOException e) {
-                        LOGGER.warnf("Failed to create cluster ready flag file %s", path, e);
-                    }
-                });
-            });
-
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (InterruptedException e) {
@@ -111,10 +94,5 @@ public class EmbeddedZookeeperServer implements Closeable {
             throw new IllegalStateException("Configuration of the running zookeeper is not permitted.");
         }
     }
-
-    public EmbeddedZookeeperServer withZookeeperReadyFlagFile(Optional<Path> zookeeperReadyFlagFile) {
-        this.zookeeperReadyFlagFile = zookeeperReadyFlagFile;
-        return this;
-    }
-
+    
 }

@@ -7,7 +7,7 @@ import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 
 class ZookeeperServerExtensionProcessor {
-    private static final String FEATURE = "zookeeper    -server-extension";
+    private static final String FEATURE = "zookeeper-server-extension";
 
     @BuildStep
     FeatureBuildItem feature() {

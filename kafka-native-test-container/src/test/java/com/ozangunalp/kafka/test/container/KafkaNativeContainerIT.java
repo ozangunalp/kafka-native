@@ -25,7 +25,6 @@ import org.testcontainers.utility.MountableFile;
 
 import com.ozangunalp.kafka.server.Endpoints;
 import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
-import io.strimzi.test.container.StrimziZookeeperContainer;
 
 public class KafkaNativeContainerIT {
 
