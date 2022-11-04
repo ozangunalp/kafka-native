@@ -8,7 +8,6 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
-import com.ozangunalp.kafka.server.BrokerConfig;
 import kafka.server.KafkaConfig;
 
 class BrokerConfigTest {
@@ -42,6 +41,46 @@ class BrokerConfigTest {
         assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER,CONTROLLER");
         assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
     }
+    
+    @Test
+    void testOverrideProcessRoles() {
+        Properties props = new Properties();
+        props.put(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
+        props.put(KafkaConfig.ProcessRolesProp(), "broker");
+        props.put(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
+        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+        props.put(KafkaConfig.QuorumVotersProp(), "1@:9094");
+        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
+        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.InterBrokerListenerNameProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.EarlyStartListenersProp());
+        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
+        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
+        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker");
+        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+    }
+
+    @Test
+    void testOverrideProcessRolesWithNoQuorumVotersOverride() {
+        Properties props = new Properties();
+        props.put(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
+        props.put(KafkaConfig.ProcessRolesProp(), "broker");
+        props.put(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
+        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
+        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.InterBrokerListenerNameProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.EarlyStartListenersProp());
+        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
+        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
+        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker");
+        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
+        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+    }
+
     @Test
     void testOverrideListeners() {
         Properties props = new Properties();
