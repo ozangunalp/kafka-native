@@ -25,7 +25,6 @@ import org.testcontainers.utility.MountableFile;
 
 import com.ozangunalp.kafka.server.Endpoints;
 import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
-import io.strimzi.test.container.StrimziZookeeperContainer;
 
 public class KafkaNativeContainerIT {
 
@@ -159,8 +158,9 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testZookeeperContainer() {
-        try (ZookeeperContainer zookeeper = new ZookeeperContainer()) {
-            zookeeper.withName(testOutputName);
+        try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
+                .withNetwork(Network.SHARED)
+                .withNetworkAliases("zookeeper")) {
             zookeeper.start();
             try (var container = createKafkaNativeContainer()
                     .withNetwork(Network.SHARED)

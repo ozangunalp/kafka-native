@@ -10,7 +10,7 @@
     
     <name>Kafka Native</name>
 
-    <description></description>
+    <description>Provides images containing natively-compiled Kafka and Zookeeper.</description>
     <url>https://github.com/ozangunalp/kafka-native</url>
     
     <inceptionYear>2022</inceptionYear>
@@ -72,6 +72,7 @@
 
         <quarkus.version>2.13.0.Final</quarkus.version>
         <kafka.version>3.3.1</kafka.version>
+        <zookeeper.version>3.6.3</zookeeper.version>
         <scala.version>2.13.8</scala.version>
 
         <strimzi-oauth.version>0.10.0</strimzi-oauth.version>
@@ -87,7 +88,9 @@
 
     <modules>
         <module>quarkus-kafka-server-extension</module>
+        <module>quarkus-zookeeper-server-extension</module>
         <module>kafka-server</module>
+        <module>zookeeper-server</module>
         <module>kafka-native-test-container</module>
     </modules>
 
@@ -145,6 +148,11 @@
                 <artifactId>kafka-oauth-keycloak-authorizer</artifactId>
                 <version>${strimzi-oauth.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
+            </dependency>
             <!-- This project -->
             <dependency>
                 <groupId>com.ozangunalp</groupId>
@@ -153,7 +161,27 @@
             </dependency>
             <dependency>
                 <groupId>com.ozangunalp</groupId>
+                <artifactId>quarkus-zookeeper-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ozangunalp</groupId>
                 <artifactId>kafka-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ozangunalp</groupId>
+                <artifactId>zookeeper-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ozangunalp</groupId>
+                <artifactId>quarkus-kafka-server-deployment</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ozangunalp</groupId>
+                <artifactId>quarkus-zookeeper-server-deployment</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

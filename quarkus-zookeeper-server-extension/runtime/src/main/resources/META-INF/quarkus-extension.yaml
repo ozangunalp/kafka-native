@@ -1,0 +1,10 @@
+name: Zookeeper Server Extension
+#description: Do something useful.
+metadata:
+  status: "preview"
+  keywords:
+    - zookeeper-server-extension
+    - zookeeper-native
+#  guide: ...
+#  categories:
+#    - "miscellaneous"
