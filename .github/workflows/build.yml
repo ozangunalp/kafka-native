@@ -27,11 +27,13 @@ jobs:
       - name: Integration Tests with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
-            clean verify -Dtest-container -Dkafka-native-container-version=${{ github.ref_name }}-${{ github.sha }}
+            clean verify -Dtest-container \
+            -Dkafka-native-container-version=${{ github.ref_name }}-${{ github.sha }} \
+            -Dzookeeper-native-container-version=${{ github.ref_name }}-${{ github.sha }}
       - name: Push To quay.io
         id: push-to-quay
         uses: redhat-actions/push-to-registry@v2
         with:
-          tags: quay.io/ogunalp/kafka-native:latest-snapshot quay.io/ogunalp/kafka-native:${{ github.ref_name }}-${{ github.sha }}
+          tags: quay.io/ogunalp/kafka-native:latest-snapshot quay.io/ogunalp/kafka-native:${{ github.ref_name }}-${{ github.sha }} quay.io/ogunalp/zookeeper-native:latest-snapshot quay.io/ogunalp/zookeeper-native:${{ github.ref_name }}-${{ github.sha }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
