@@ -148,7 +148,7 @@ public class KafkaNativeContainerIT {
                         SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required" +
                                 " oauth.client.id=\"kafka-client\"" +
                                 " oauth.client.secret=\"kafka-client-secret\"" +
-                                " oauth.token.endpoint.uri=\"http://keycloak:8080/auth/realms/kafka-authz/protocol/openid-connect/token\";"));
+                                " oauth.token.endpoint.uri=\"http://keycloak:8080/realms/kafka-authz/protocol/openid-connect/token\";"));
             }
         }
     }

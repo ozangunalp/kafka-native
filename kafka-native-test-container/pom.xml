@@ -19,16 +19,6 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>com.ozangunalp</groupId>
-            <artifactId>kafka-server</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.ozangunalp</groupId>
-            <artifactId>zookeeper-server</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
         </dependency>
@@ -36,6 +26,22 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ozangunalp</groupId>
+            <artifactId>kafka-server</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.ozangunalp</groupId>
+            <artifactId>zookeeper-server</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.smallrye.reactive</groupId>
@@ -48,6 +54,21 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                    <systemPropertyVariables>
+                        <jdk.net.hosts.file>target/hosts</jdk.net.hosts.file>
+                        <container.logs.dir>${project.build.directory}/container-logs/</container.logs.dir>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <profiles>
         <profile>
             <id>test-container</id>
@@ -71,7 +92,7 @@
                                 <configuration>
                                     <systemPropertyVariables>
                                         <jdk.net.hosts.file>target/hosts</jdk.net.hosts.file>
-                                        <container.logs.dir>${build.directory}/container-logs/</container.logs.dir>
+                                        <container.logs.dir>${project.build.directory}/container-logs/</container.logs.dir>
                                     </systemPropertyVariables>
                                 </configuration>
                             </execution>
