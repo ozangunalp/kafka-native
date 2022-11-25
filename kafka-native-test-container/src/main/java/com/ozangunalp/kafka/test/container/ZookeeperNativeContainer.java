@@ -1,6 +1,10 @@
 package com.ozangunalp.kafka.test.container;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
@@ -13,6 +17,7 @@ public class ZookeeperNativeContainer extends GenericContainer<ZookeeperNativeCo
     private static final int ZOOKEEPER_PORT = 2181;
 
     private int exposedPort = -1;
+    private Function<GenericContainer<?>, Consumer<OutputFrame>> outputFrameConsumer;
 
     public static DockerImageName imageName(String version) {
         return DockerImageName.parse(DEFAULT_REPOSITORY + ":" + version);
@@ -37,6 +42,15 @@ public class ZookeeperNativeContainer extends GenericContainer<ZookeeperNativeCo
         super.containerIsStarting(containerInfo, reused);
         // Set exposed port
         this.exposedPort = getMappedPort(ZOOKEEPER_PORT);
+        // follow output
+        if (outputFrameConsumer != null) {
+            followOutput(outputFrameConsumer.apply(this));
+        }
+    }
+    
+    public ZookeeperNativeContainer withFollowOutput(Function<GenericContainer<?>, Consumer<OutputFrame>> outputFrameConsumer) {
+        this.outputFrameConsumer = outputFrameConsumer;
+        return self();
     }
 
     public int getExposedZookeeperPort() {
