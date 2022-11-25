@@ -1,0 +1,54 @@
+---
+name: Release Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+          server-id: ossrh
+          server-username: OSSRH_USERNAME # env variable for username in deploy
+          server-password: OSSRH_TOKEN # env variable for token in deploy
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
+          overwrite-settings: false
+      - name: Set Release Version
+        run: |
+          echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      - name: Build with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean package -Dnative \
+            -Dquarkus.native.container-build=true \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.tag=${{ env.RELEASE_VERSION }} \
+            -Dquarkus.container-image.additional-tags=latest
+      - name: Integration Tests with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean verify -Dtest-container \
+            -Dkafka-native-container-version=${{ env.RELEASE_VERSION }} \
+            -Dzookeeper-native-container-version=${{ env.RELEASE_VERSION }}
+      - name: Release to Maven Central
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean deploy -DskipTests -Prelease
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Push To quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          tags: quay.io/ogunalp/kafka-native:latest quay.io/ogunalp/kafka-native:${{ env.RELEASE_VERSION }} quay.io/ogunalp/zookeeper-native:latest-snapshot quay.io/ogunalp/zookeeper-native:${{ env.RELEASE_VERSION }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}

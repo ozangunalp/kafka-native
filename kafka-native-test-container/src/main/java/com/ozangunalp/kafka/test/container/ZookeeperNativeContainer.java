@@ -13,7 +13,7 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 public class ZookeeperNativeContainer extends GenericContainer<ZookeeperNativeContainer> {
 
     public static final String DEFAULT_REPOSITORY = System.getProperty("zookeeper-native-container-image", "quay.io/ogunalp/zookeeper-native");
-    public static final String DEFAULT_VERSION = System.getProperty("zookeeper-native-container-version", "latest-snapshot");
+    public static final String DEFAULT_VERSION = System.getProperty("zookeeper-native-container-version", "latest");
     private static final int ZOOKEEPER_PORT = 2181;
 
     private int exposedPort = -1;
