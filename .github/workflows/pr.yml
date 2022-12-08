@@ -21,7 +21,7 @@ jobs:
             clean package -Dnative \
             -Dquarkus.native.container-build=true \
             -Dquarkus.container-image.build=true \
-            -Dquarkus.container-image.additional-tags=latest-snapshot
+            -Dquarkus.container-image.additional-tags=latest
       - name: Integration Tests with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
