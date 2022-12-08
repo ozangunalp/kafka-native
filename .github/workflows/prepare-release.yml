@@ -1,0 +1,42 @@
+---
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'The release version, if not set it computes the version automatically'
+        required: false
+      skip-tests:
+        description: 'Whether to skip the tests before pushing the tag'
+        required: false
+        default: true
+      branch:
+        description: 'The branch from which the release is cut'
+        required: false
+        default: 'main'
+      dry-run:
+        description: 'Skip Git push'
+        required: false
+        default: true
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+      - name: Prepare release branch
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          RELEASE_VERSION: ${{ github.event.inputs.release-version }}
+          SKIP_TESTS: ${{ github.event.inputs.skip-tests }}
+          DRY_RUN: ${{ github.event.inputs.dry-run }}
+        run: .build/cut-release.sh
