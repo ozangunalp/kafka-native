@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.ozangunalp</groupId>
     <artifactId>quarkus-kafka-server-extension</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>999-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-kafka-server-deployment</artifactId>
   <name>Kafka Server Extension - Deployment</name>
