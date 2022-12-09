@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.ozangunalp</groupId>
     <artifactId>kafka-native-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>999-SNAPSHOT</version>
   </parent>
   <artifactId>quarkus-kafka-server-extension</artifactId>
   <packaging>pom</packaging>

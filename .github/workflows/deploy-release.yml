@@ -1,14 +1,21 @@
 ---
-name: Release Build
+name: Deploy Release
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch from which to deploy the release'
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.ref }}
+          token: ${{ secrets.RELEASE_TOKEN }}
       - uses: actions/setup-java@v3
         with:
           java-version: 17
@@ -49,6 +56,6 @@ jobs:
         id: push-to-quay
         uses: redhat-actions/push-to-registry@v2
         with:
-          tags: quay.io/ogunalp/kafka-native:latest quay.io/ogunalp/kafka-native:${{ env.RELEASE_VERSION }} quay.io/ogunalp/zookeeper-native:latest-snapshot quay.io/ogunalp/zookeeper-native:${{ env.RELEASE_VERSION }}
+          tags: quay.io/ogunalp/kafka-native:latest quay.io/ogunalp/kafka-native:${{ env.RELEASE_VERSION }} quay.io/ogunalp/zookeeper-native:latest quay.io/ogunalp/zookeeper-native:${{ env.RELEASE_VERSION }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
