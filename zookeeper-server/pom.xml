@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.ozangunalp</groupId>
     <artifactId>kafka-native-parent</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>0.1.0</version>
   </parent>
   <artifactId>zookeeper-server</artifactId>
   <name>Zookeeper Server</name>
