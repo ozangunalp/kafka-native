@@ -33,10 +33,14 @@ jobs:
           java-version: 17
           distribution: temurin
           cache: maven
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
+          overwrite-settings: false
       - name: Prepare release branch
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           RELEASE_VERSION: ${{ github.event.inputs.release-version }}
           SKIP_TESTS: ${{ github.event.inputs.skip-tests }}
           DRY_RUN: ${{ github.event.inputs.dry-run }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: .build/cut-release.sh

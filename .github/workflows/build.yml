@@ -19,12 +19,13 @@ jobs:
           server-id: ossrh
           server-username: OSSRH_USERNAME # env variable for username in deploy
           server-password: OSSRH_TOKEN # env variable for token in deploy
-          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
           gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
           overwrite-settings: false
       - name: Set Image Tag
         run: |
           echo "BUILD_IMAGE_TAG=${GITHUB_REF_NAME}-${GITHUB_SHA}" >> $GITHUB_ENV
+          echo Building images with tag ${BUILD_IMAGE_TAG}
       - name: Build with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
