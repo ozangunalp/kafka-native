@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.ref }}
+          ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.RELEASE_TOKEN }}
       - uses: actions/setup-java@v3
         with:
@@ -30,7 +30,6 @@ jobs:
       - name: Set Release Version
         run: |
           echo "RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-          echo Releasing version ${RELEASE_VERSION}
       - name: Build with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \

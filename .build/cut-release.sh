@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
+init_git() {
+    git config --global user.name "${GITHUB_ACTOR}"
+    git config --global user.email "ozangunalp@gmail.com"
+}
+
+# -------- SCRIPT START HERE -----------------
+
+init_git
+
 export BRANCH="HEAD"
 export GPG_CONFIG=""
 
