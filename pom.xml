@@ -69,9 +69,8 @@
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>${quarkus.version}</quarkus.platform.version>
+        <quarkus.platform.version>2.14.3.Final</quarkus.platform.version>
 
-        <quarkus.version>2.13.0.Final</quarkus.version>
         <kafka.version>3.3.1</kafka.version>
         <zookeeper.version>3.8.0</zookeeper.version>
         <scala.version>2.13.10</scala.version>
@@ -284,6 +283,16 @@
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
                     <version>${jreleaser-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>${quarkus.platform.group-id}</groupId>
+                    <artifactId>quarkus-maven-plugin</artifactId>
+                    <version>${quarkus.platform.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-extension-maven-plugin</artifactId>
+                    <version>${quarkus.platform.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
