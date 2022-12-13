@@ -26,7 +26,7 @@ import org.objectweb.asm.Opcodes;
 
 import com.ozangunalp.kafka.server.extension.runtime.JsonPathConfigRecorder;
 import com.sun.security.auth.module.Krb5LoginModule;
-import io.quarkus.deployment.IsDevelopment;
+import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.annotations.ExecutionTime;
@@ -97,7 +97,7 @@ class KafkaServerExtensionProcessor {
         return new FeatureBuildItem(FEATURE);
     }
 
-    @BuildStep(onlyIf = IsDevelopment.class)
+    @BuildStep(onlyIfNot = IsNormal.class)
     RunTimeConfigurationDefaultBuildItem deleteDirsOnClose() {
         return new RunTimeConfigurationDefaultBuildItem("server.delete-dirs-on-close", "true");
     }
