@@ -6,6 +6,7 @@ import javax.security.auth.spi.LoginModule;
 
 import org.apache.kafka.common.security.auth.AuthenticateCallbackHandler;
 import org.apache.kafka.common.security.auth.KafkaPrincipalBuilder;
+import org.apache.kafka.common.security.auth.Login;
 import org.apache.kafka.common.security.authenticator.AbstractLogin;
 import org.apache.kafka.common.security.authenticator.DefaultLogin;
 import org.apache.kafka.common.security.authenticator.SaslServerCallbackHandler;
@@ -24,6 +25,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import com.ozangunalp.kafka.server.extension.runtime.JsonPathConfigRecorder;
+import com.sun.security.auth.module.Krb5LoginModule;
 import io.quarkus.deployment.IsDevelopment;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -66,16 +68,24 @@ class KafkaServerExtensionProcessor {
     metric.reporters, default: null
     */
 
-    private static final Set<String> SASL_PROVIDERS = Set.of("com.sun.security.sasl.Provider",
+    private static final Set<String> SECURITY_PROVIDERS = Set.of(
+            "com.sun.security.sasl.Provider",
+            "com.sun.security.sasl.gsskerb.JdkSASL",
+            "sun.security.jgss.SunProvider",
             ScramSaslServerProvider.class.getName(),
             PlainSaslServerProvider.class.getName(),
             OAuthBearerSaslServerProvider.class.getName());
+
+    private static final Set<String> GSSAPI_MECHANISM_FACTORIES = Set.of(
+            "sun.security.jgss.krb5.Krb5MechFactory",
+            "sun.security.jgss.spnego.SpNegoMechFactory");
 
     private static final Set<String> SASL_SERVER_FACTORIES = Set.of(
             ScramSaslServer.ScramSaslServerFactory.class.getName(),
             PlainSaslServer.PlainSaslServerFactory.class.getName(),
             OAuthBearerSaslServer.OAuthBearerSaslServerFactory.class.getName());
 
+    private static final DotName LOGIN = DotName.createSimple(Login.class.getName());
     private static final DotName LOGIN_MODULE = DotName.createSimple(LoginModule.class.getName());
     private static final DotName AUTHENTICATE_CALLBACK_HANDLER = DotName
             .createSimple(AuthenticateCallbackHandler.class.getName());
@@ -108,6 +118,9 @@ class KafkaServerExtensionProcessor {
                 "org.apache.kafka.common.security.authenticator.SaslClientAuthenticator"));
         producer.produce(new RuntimeInitializedClassBuildItem(
             "org.apache.kafka.common.security.oauthbearer.internals.expiring.ExpiringCredentialRefreshingLogin"));
+        producer.produce(new RuntimeInitializedClassBuildItem(
+            "org.apache.kafka.common.security.kerberos.KerberosLogin"));
+        
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
@@ -170,6 +183,9 @@ class KafkaServerExtensionProcessor {
         // Enable SSL support if kafka.security.protocol is set to something other than PLAINTEXT, which is the default
         sslNativeSupport.produce(new ExtensionSslNativeSupportBuildItem(FEATURE));
 
+        for (ClassInfo login : index.getIndex().getAllKnownImplementors(LOGIN)) {
+            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, login.name().toString()));
+        }
         for (ClassInfo loginModule : index.getIndex().getAllKnownImplementors(LOGIN_MODULE)) {
             reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, loginModule.name().toString()));
         }
@@ -179,9 +195,14 @@ class KafkaServerExtensionProcessor {
         for (ClassInfo authenticateCallbackHandler : index.getIndex().getAllKnownImplementors(AUTHENTICATE_CALLBACK_HANDLER)) {
             reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, authenticateCallbackHandler.name().toString()));
         }
-        for (String provider : SASL_PROVIDERS) {
+        for (String provider : SECURITY_PROVIDERS) {
             securityProviders.produce(new NativeImageSecurityProviderBuildItem(provider));
         }
+        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, Krb5LoginModule.class.getName()));
+        for (String mechanismFactory : GSSAPI_MECHANISM_FACTORIES) {
+            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, mechanismFactory));
+        }
+        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true, "sun.security.jgss.GSSContextImpl"));
     }
 
     @BuildStep
