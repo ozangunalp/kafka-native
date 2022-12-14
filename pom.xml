@@ -71,7 +71,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>2.16.2.Final</quarkus.platform.version>
 
-        <kafka.version>3.3.2</kafka.version>
+        <kafka.version>3.2.3</kafka.version>
         <zookeeper.version>3.8.1</zookeeper.version>
         <scala.version>2.13.10</scala.version>
 
