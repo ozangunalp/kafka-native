@@ -16,7 +16,7 @@ import org.apache.kafka.common.security.plain.internals.PlainSaslServer;
 import org.apache.kafka.common.security.plain.internals.PlainSaslServerProvider;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServer;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServerProvider;
-import org.apache.kafka.server.metrics.KafkaYammerMetrics;
+import kafka.metrics.KafkaYammerMetrics;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.objectweb.asm.ClassVisitor;
@@ -246,7 +246,7 @@ class KafkaServerExtensionProcessor {
                         visitTypeInsn(Opcodes.NEW, "com/yammer/metrics/core/MetricsRegistry");
                         visitInsn(Opcodes.DUP);
                         visitMethodInsn(Opcodes.INVOKESPECIAL, "com/yammer/metrics/core/MetricsRegistry", "<init>", "()V", false);
-                        visitFieldInsn(Opcodes.PUTFIELD, "org/apache/kafka/server/metrics/KafkaYammerMetrics", "metricsRegistry", "Lcom/yammer/metrics/core/MetricsRegistry;");
+                        visitFieldInsn(Opcodes.PUTFIELD, "kafka/metrics/KafkaYammerMetrics", "metricsRegistry", "Lcom/yammer/metrics/core/MetricsRegistry;");
                         visitInsn(Opcodes.RETURN);
                     }
 

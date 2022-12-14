@@ -1,7 +1,5 @@
 package com.ozangunalp.kafka.server;
 
-import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -53,15 +51,13 @@ public final class Storage {
     public static void formatStorageFromConfig(KafkaConfig config, String clusterId, boolean ignoreFormatted) {
         Seq<String> directories = StorageTool.configToLogDirectories(config);
         MetaProperties metaProperties = StorageTool.buildMetadataProperties(clusterId, config);
-        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), directories, metaProperties, 
-                MINIMUM_BOOTSTRAP_VERSION, ignoreFormatted);
+        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), directories, metaProperties, ignoreFormatted);
     }
 
     public static void formatStorage(List<String> directories, String clusterId, int nodeId, boolean ignoreFormatted) {
         MetaProperties metaProperties = new MetaProperties(clusterId, nodeId);
         Seq<String> dirs = CollectionConverters.ListHasAsScala(directories).asScala().toSeq();
-        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), dirs, metaProperties, 
-                MINIMUM_BOOTSTRAP_VERSION, ignoreFormatted);
+        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), dirs, metaProperties, ignoreFormatted);
     }
 
     public static class LoggingOutputStream extends java.io.OutputStream {

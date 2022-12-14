@@ -118,8 +118,6 @@ public final class BrokerConfig {
             props.compute(KafkaConfig.ListenerSecurityProtocolMapProp(), (k, v) ->
                     mergeSecurityProtocolMap(securityProtocolMapListeners, (String) v));
 
-            // Configure early start listeners
-            props.put(KafkaConfig.EarlyStartListenersProp(), String.join(",", earlyStartListeners));
         } else {
             LOGGER.warnf("Broker configs %s, %s, %s, %s will not be configured automatically, " +
                             "make sure to provide necessary configuration manually.",
