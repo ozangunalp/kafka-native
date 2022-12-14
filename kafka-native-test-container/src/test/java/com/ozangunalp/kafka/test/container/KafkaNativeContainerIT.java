@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +48,8 @@ public class KafkaNativeContainerIT {
     public void initTopic(TestInfo testInfo) {
         String cn = testInfo.getTestClass().map(Class::getSimpleName).orElse(UUID.randomUUID().toString());
         String mn = testInfo.getTestMethod().map(Method::getName).orElse(UUID.randomUUID().toString());
-        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), OffsetDateTime.now());
+        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), 
+                OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH.mm.ss")));
         topic = cn + "-" + mn + "-" + UUID.randomUUID().getMostSignificantBits();
     }
 
@@ -166,10 +168,8 @@ public class KafkaNativeContainerIT {
                     .withServerProperties(MountableFile.forClasspathResource("kerberos/kafkaServer.properties"))
                     .withAdvertisedListeners(
                             c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))
-                    .withCopyFileToContainer(
-                            MountableFile.forClasspathResource("kerberos/krb5KafkaBroker.conf"), "/etc/krb5.conf")
-                    .withCopyFileToContainer(
-                            MountableFile.forHostPath("target/kafkabroker.keytab"), "/opt/kafka/config/kafkabroker.keytab")
+                    .withFileSystemBind("src/test/resources/kerberos/krb5KafkaBroker.conf", "/etc/krb5.conf")
+                    .withFileSystemBind("src/test/resources/kerberos/kafkabroker.keytab", "/opt/kafka/config/kafkabroker.keytab")
             ) {
                 container.start();
                 checkProduceConsume(container, Map.of(
@@ -180,7 +180,7 @@ public class KafkaNativeContainerIT {
                                 "storeKey=true " +
                                 "debug=true " +
                                 "serviceName=\"kafka\" " +
-                                "keyTab=\"target/client.keytab\" " +
+                                "keyTab=\"src/test/resources/kerberos/client.keytab\" " +
                                 "principal=\"client/localhost@EXAMPLE.COM\";",
                         SaslConfigs.SASL_KERBEROS_SERVICE_NAME, "kafka",
                         SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "https"));

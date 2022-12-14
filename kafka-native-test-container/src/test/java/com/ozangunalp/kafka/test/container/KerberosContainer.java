@@ -36,8 +36,8 @@ public class KerberosContainer extends GenericContainer<KerberosContainer> {
                     "addprinc -randkey client/localhost@EXAMPLE.COM");
             lsResult = execInContainer("kadmin.local", "-q",
                     "ktadd -norandkey -k /client.keytab client/localhost@EXAMPLE.COM");
-            copyFileFromContainer("/kafkabroker.keytab", "target/kafkabroker.keytab");
-            copyFileFromContainer("/client.keytab", "target/client.keytab");
+            copyFileFromContainer("/kafkabroker.keytab", "src/test/resources/kerberos/kafkabroker.keytab");
+            copyFileFromContainer("/client.keytab", "src/test/resources/kerberos/client.keytab");
         } catch (Exception e) {
             e.printStackTrace();
         }
