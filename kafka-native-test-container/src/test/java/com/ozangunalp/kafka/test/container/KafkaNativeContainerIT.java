@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +48,8 @@ public class KafkaNativeContainerIT {
     public void initTopic(TestInfo testInfo) {
         String cn = testInfo.getTestClass().map(Class::getSimpleName).orElse(UUID.randomUUID().toString());
         String mn = testInfo.getTestMethod().map(Method::getName).orElse(UUID.randomUUID().toString());
-        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), OffsetDateTime.now());
+        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), 
+                OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH.mm.ss")));
         topic = cn + "-" + mn + "-" + UUID.randomUUID().getMostSignificantBits();
     }
 

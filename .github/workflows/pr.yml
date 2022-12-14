@@ -32,4 +32,4 @@ jobs:
         with:
           name: integration-test-logs
           retention-days: 3
-          path: kafka-native-test-container/target/container-logs/**/*.log
+          path: kafka-native-test-container/target/container-logs/
