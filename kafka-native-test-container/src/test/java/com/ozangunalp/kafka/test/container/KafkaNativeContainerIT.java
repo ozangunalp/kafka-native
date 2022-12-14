@@ -154,6 +154,41 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
+    void testKerberosContainer() {
+        try (KerberosContainer kerberos = new KerberosContainer("gcavalcante8808/krb5-server")) {
+            kerberos.start();
+            kerberos.followOutput(new ToFileConsumer(testOutputName, kerberos));
+            kerberos.createTestPrincipals();
+            kerberos.createKrb5File();
+            try (var container = createKafkaNativeContainer()
+                    .withNetworkAliases("kafka")
+                    .withNetwork(Network.SHARED)
+                    .withServerProperties(MountableFile.forClasspathResource("kerberos/kafkaServer.properties"))
+                    .withAdvertisedListeners(
+                            c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))
+                    .withCopyFileToContainer(
+                            MountableFile.forClasspathResource("kerberos/krb5KafkaBroker.conf"), "/etc/krb5.conf")
+                    .withCopyFileToContainer(
+                            MountableFile.forHostPath("target/kafkabroker.keytab"), "/opt/kafka/config/kafkabroker.keytab")
+            ) {
+                container.start();
+                checkProduceConsume(container, Map.of(
+                        CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
+                        SaslConfigs.SASL_MECHANISM, "GSSAPI",
+                        SaslConfigs.SASL_JAAS_CONFIG, "com.sun.security.auth.module.Krb5LoginModule required " +
+                                "useKeyTab=true " +
+                                "storeKey=true " +
+                                "debug=true " +
+                                "serviceName=\"kafka\" " +
+                                "keyTab=\"target/client.keytab\" " +
+                                "principal=\"client/localhost@EXAMPLE.COM\";",
+                        SaslConfigs.SASL_KERBEROS_SERVICE_NAME, "kafka",
+                        SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "https"));
+            }
+        }
+    }
+
+    @Test
     void testZookeeperContainer() {
         try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
                 .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))

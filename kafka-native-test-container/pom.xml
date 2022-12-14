@@ -63,6 +63,7 @@
                     <skip>true</skip>
                     <systemPropertyVariables>
                         <jdk.net.hosts.file>target/hosts</jdk.net.hosts.file>
+                        <java.security.krb5.conf>target/krb5.conf</java.security.krb5.conf>
                         <container.logs.dir>${project.build.directory}/container-logs/</container.logs.dir>
                     </systemPropertyVariables>
                 </configuration>
@@ -92,6 +93,7 @@
                                 <configuration>
                                     <systemPropertyVariables>
                                         <jdk.net.hosts.file>target/hosts</jdk.net.hosts.file>
+                                        <java.security.krb5.conf>target/krb5.conf</java.security.krb5.conf>
                                         <container.logs.dir>${project.build.directory}/container-logs/</container.logs.dir>
                                     </systemPropertyVariables>
                                 </configuration>
