@@ -76,7 +76,7 @@
         <scala.version>2.13.10</scala.version>
 
         <strimzi-oauth.version>0.11.0</strimzi-oauth.version>
-        <assertj.version>3.23.1</assertj.version>
+        <assertj.version>3.24.1</assertj.version>
     </properties>
 
     <distributionManagement>
