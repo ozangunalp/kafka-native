@@ -25,7 +25,6 @@ import com.oracle.svm.core.annotate.TargetClass;
 import kafka.log.OffsetIndex;
 import kafka.log.TimeIndex;
 import kafka.log.TransactionIndex;
-import kafka.metrics.KafkaTimer;
 
 @TargetClass(value = AppInfoParser.class)
 final class RemoveJMXAccess {
@@ -114,19 +113,15 @@ final class Target_LogConfig {
 final class Target_LogFlushStats {
 
     @Delete
-    private static KafkaTimer logFlushTimer;
+    private static Target_com_yammer_metrics_core_Timer logFlushTimer;
 
 }
 
 // Used in kafka.log.LogFlushStats.logFlushTimer
-/*@TargetClass(className = "kafka.metrics.KafkaTimer")
-final class Target_KafkaTimer {
+@TargetClass(className = "com.yammer.metrics.core.Timer")
+final class Target_com_yammer_metrics_core_Timer {
 
-    @Substitute
-    <A> A time(scala.Function0<A> f) {
-        return f.apply();
-    }
-}*/
+}
 
 @TargetClass(className = "kafka.log.LogSegment")
 final class Target_LogSegment {
