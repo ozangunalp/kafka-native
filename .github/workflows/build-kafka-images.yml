@@ -1,0 +1,60 @@
+---
+name: Build Kafka Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'The branch from which to deploy the release'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+      - uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+          server-id: ossrh
+          server-username: OSSRH_USERNAME # env variable for username in deploy
+          server-password: OSSRH_TOKEN # env variable for token in deploy
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
+          overwrite-settings: false
+      - name: Set Image Tag
+        run: |
+          echo "BUILD_IMAGE_TAG=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+      - name: Build with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean package -Dnative \
+            -Dquarkus.native.container-build=true \
+            -Dquarkus.container-image.build=true \
+            -Dquarkus.container-image.tag=latest-${BUILD_IMAGE_TAG}
+      - name: Integration Tests with Maven
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean verify -Dtest-container \
+            -Dkafka-native-container-version=latest-${BUILD_IMAGE_TAG} \
+            -Dzookeeper-native-container-version=latest-${BUILD_IMAGE_TAG}
+      - name: Release Snapshots
+        run: |
+          mvn -s .github/ci-maven-settings.xml -B \
+            clean deploy -DskipTests -Prelease
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Push To quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          tags: quay.io/ogunalp/kafka-native:latest-${{ env.BUILD_IMAGE_TAG }} quay.io/ogunalp/zookeeper-native:latest-${{ env.BUILD_IMAGE_TAG }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
