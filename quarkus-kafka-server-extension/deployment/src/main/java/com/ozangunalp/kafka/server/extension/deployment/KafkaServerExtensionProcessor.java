@@ -113,7 +113,8 @@ class KafkaServerExtensionProcessor {
     }
     
     @BuildStep
-    void build(BuildProducer<RuntimeInitializedClassBuildItem> producer) {
+    void build(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
+            BuildProducer<RuntimeInitializedClassBuildItem> producer) {
         producer.produce(new RuntimeInitializedClassBuildItem(
                 "org.apache.kafka.common.security.authenticator.SaslClientAuthenticator"));
         producer.produce(new RuntimeInitializedClassBuildItem(
@@ -124,6 +125,8 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
+
+        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, org.apache.kafka.common.metrics.JmxReporter.class));
     }
 
     @BuildStep
