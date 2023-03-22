@@ -75,7 +75,7 @@
         <zookeeper.version>3.8.1</zookeeper.version>
         <scala.version>2.13.10</scala.version>
 
-        <strimzi-oauth.version>0.11.0</strimzi-oauth.version>
+        <strimzi-oauth.version>0.12.0</strimzi-oauth.version>
         <assertj.version>3.24.2</assertj.version>
     </properties>
 
