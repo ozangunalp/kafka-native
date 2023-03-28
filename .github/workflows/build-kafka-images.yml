@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'The branch from which to deploy the release'
+        description: 'The branch from which to deploy the release, must follow [project-version]-kafka-[kafka-version]'
         required: true
 
 jobs:
@@ -29,32 +29,41 @@ jobs:
           overwrite-settings: false
       - name: Set Image Tag
         run: |
-          echo "BUILD_IMAGE_TAG=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+          RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          KAFKA_VERSION=$(mvn help:evaluate -Dexpression=kafka.version -q -DforceStdout)
+          echo "BUILD_IMAGE_TAG=${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "LATEST_IMAGE_TAG=latest-kafka-${KAFKA_VERSION}" >> $GITHUB_ENV
+      - name: Check Tag name
+        run: .build/check-kafka-tag.sh
       - name: Build with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
             clean package -Dnative \
             -Dquarkus.native.container-build=true \
             -Dquarkus.container-image.build=true \
-            -Dquarkus.container-image.tag=latest-${BUILD_IMAGE_TAG}
+            -Dquarkus.container-image.tag=${{ env.BUILD_IMAGE_TAG }} \
+            -Dquarkus.container-image.additional-tags=${{ env.LATEST_IMAGE_TAG }}
       - name: Integration Tests with Maven
         run: |
           mvn -s .github/ci-maven-settings.xml -B \
             clean verify -Dtest-container \
-            -Dkafka-native-container-version=latest-${BUILD_IMAGE_TAG} \
-            -Dzookeeper-native-container-version=latest-${BUILD_IMAGE_TAG}
-      - name: Release Snapshots
-        run: |
-          mvn -s .github/ci-maven-settings.xml -B \
-            clean deploy -DskipTests -Prelease
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      - name: Push To quay.io
-        id: push-to-quay
+            -Dkafka-native-container-version=${{ env.BUILD_IMAGE_TAG }} \
+            -Dzookeeper-native-container-version=${{ env.BUILD_IMAGE_TAG }}
+      - name: Push To quay.io kafka-native
+        id: push-to-quay-kafka
         uses: redhat-actions/push-to-registry@v2
         with:
-          tags: quay.io/ogunalp/kafka-native:latest-${{ env.BUILD_IMAGE_TAG }} quay.io/ogunalp/zookeeper-native:latest-${{ env.BUILD_IMAGE_TAG }}
+          registry: quay.io/ogunalp
+          image: kafka-native
+          tags: ${{ env.BUILD_IMAGE_TAG }} ${{ env.LATEST_IMAGE_TAG }}
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+      - name: Push To quay.io zookeeper-native
+        id: push-to-quay-zookeeper
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: quay.io/ogunalp
+          image: zookeeper-native
+          tags: ${{ env.BUILD_IMAGE_TAG }} ${{ env.LATEST_IMAGE_TAG }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
