@@ -59,17 +59,13 @@ jobs:
         id: push-to-quay-kafka
         uses: redhat-actions/push-to-registry@v2
         with:
-          registry: quay.io/ogunalp
-          image: kafka-native
-          tags: latest ${{ env.BUILD_IMAGE_TAG }} ${{ env.LATEST_IMAGE_TAG }}
+          tags: quay.io/ogunalp/kafka-native:latest quay.io/ogunalp/kafka-native:${{ env.BUILD_IMAGE_TAG }} quay.io/ogunalp/kafka-native:${{ env.LATEST_IMAGE_TAG }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
       - name: Push To quay.io zookeeper-native
         id: push-to-quay-zookeeper
         uses: redhat-actions/push-to-registry@v2
         with:
-          registry: quay.io/ogunalp
-          image: zookeeper-native
-          tags: latest ${{ env.BUILD_IMAGE_TAG }} ${{ env.LATEST_IMAGE_TAG }}
+          tags: quay.io/ogunalp/zookeeper-native:latest quay.io/ogunalp/zookeeper-native:${{ env.BUILD_IMAGE_TAG }} quay.io/ogunalp/zookeeper-native:${{ env.LATEST_IMAGE_TAG }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
