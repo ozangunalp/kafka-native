@@ -31,6 +31,8 @@ jobs:
         run: |
           RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           KAFKA_VERSION=$(mvn help:evaluate -Dexpression=kafka.version -q -DforceStdout)
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "KAFKA_VERSION=${KAFKA_VERSION}" >> $GITHUB_ENV
           echo "BUILD_IMAGE_TAG=${RELEASE_VERSION}" >> $GITHUB_ENV
           echo "LATEST_IMAGE_TAG=latest-kafka-${KAFKA_VERSION}" >> $GITHUB_ENV
       - name: Check Tag name
