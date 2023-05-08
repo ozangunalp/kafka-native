@@ -64,7 +64,7 @@
         <source-plugin.version>3.2.1</source-plugin.version>
         <help-plugin.version>3.4.0</help-plugin.version>
         <javadoc-plugin.version>3.5.0</javadoc-plugin.version>
-        <gpg-plugin.version>3.0.1</gpg-plugin.version>
+        <gpg-plugin.version>3.1.0</gpg-plugin.version>
         <nexus-staging-plugin.version>1.6.13</nexus-staging-plugin.version>
         <jreleaser-plugin.version>1.5.1</jreleaser-plugin.version>
 
