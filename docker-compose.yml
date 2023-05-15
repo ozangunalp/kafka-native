@@ -1,0 +1,45 @@
+version: '3.5'
+
+name: kafka-native
+services:
+  broker1:
+    image: quay.io/ogunalp/kafka-native:latest
+    ports:
+      - "9095:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9095
+      SERVER_HOST: broker1
+      KAFKA_BROKER_ID: 1
+      SERVER_CLUSTER_ID: BmMQZPq6Qoua1-yvgGJFbA
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9094,2@broker2:9094
+    networks:
+      - kafka-network
+  broker2:
+    image: quay.io/ogunalp/kafka-native:latest
+    ports:
+      - "9096:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9096
+      SERVER_HOST: broker2
+      KAFKA_BROKER_ID: 2
+      SERVER_CLUSTER_ID: BmMQZPq6Qoua1-yvgGJFbA
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9094,2@broker2:9094
+    networks:
+      - kafka-network
+  broker3:
+    image: quay.io/ogunalp/kafka-native:latest
+    ports:
+      - "9097:9092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9097
+      SERVER_HOST: broker3
+      KAFKA_BROKER_ID: 3
+      SERVER_CLUSTER_ID: BmMQZPq6Qoua1-yvgGJFbA
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker1:9094,2@broker2:9094
+      KAFKA_PROCESS_ROLES: broker
+    networks:
+      - kafka-network
+
+networks:
+  kafka-network:
+    name: kafka-native
