@@ -61,7 +61,7 @@
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         <failsafe-plugin.version>3.1.2</failsafe-plugin.version>
         <release-plugin.version>3.0.0</release-plugin.version>
-        <source-plugin.version>3.2.1</source-plugin.version>
+        <source-plugin.version>3.3.0</source-plugin.version>
         <help-plugin.version>3.4.0</help-plugin.version>
         <javadoc-plugin.version>3.5.0</javadoc-plugin.version>
         <gpg-plugin.version>3.0.1</gpg-plugin.version>
