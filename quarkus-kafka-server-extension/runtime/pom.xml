@@ -26,6 +26,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-storage</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
       <artifactId>kafka_2.13</artifactId>
     </dependency>
     <dependency>

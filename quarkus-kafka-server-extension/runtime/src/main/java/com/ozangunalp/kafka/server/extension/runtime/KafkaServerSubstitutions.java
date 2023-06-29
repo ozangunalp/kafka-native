@@ -22,9 +22,9 @@ import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.InjectAccessors;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-import kafka.log.OffsetIndex;
-import kafka.log.TimeIndex;
-import kafka.log.TransactionIndex;
+import org.apache.kafka.storage.internals.log.OffsetIndex;
+import org.apache.kafka.storage.internals.log.TimeIndex;
+import org.apache.kafka.storage.internals.log.TransactionIndex;
 
 @TargetClass(value = AppInfoParser.class)
 final class RemoveJMXAccess {
@@ -85,26 +85,22 @@ final class InetSocketAnyAccessor {
     }
 }
 
-@TargetClass(className = "kafka.log.LogConfig")
+@TargetClass(className = "org.apache.kafka.storage.internals.log.LogConfig")
 final class Target_LogConfig {
+
+    @Alias
+    public long segmentMs;
+
+    @Alias
+    public long segmentJitterMs;
 
     @Substitute
     public long randomSegmentJitter() {
-        if (segmentJitterMs() == 0) {
+        if (segmentJitterMs == 0) {
             return 0;
         } else {
-            return Utils.abs(new Random().nextInt()) % Math.min(segmentJitterMs(), segmentMs());
+            return Utils.abs(new Random().nextInt()) % Math.min(segmentJitterMs, segmentMs);
         }
-    }
-
-    @Alias
-    public Long segmentJitterMs() {
-        return null;
-    }
-
-    @Alias
-    public Long segmentMs() {
-        return null;
     }
 
 }

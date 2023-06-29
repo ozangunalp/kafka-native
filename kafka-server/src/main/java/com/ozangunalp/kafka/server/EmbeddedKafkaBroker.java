@@ -186,7 +186,7 @@ public class EmbeddedKafkaBroker implements Closeable {
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
             Storage.formatStorageFromConfig(config, clusterId, true);
-            server = new KafkaRaftServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX));
+            server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();
         this.kafkaServer = server;
