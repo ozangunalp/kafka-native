@@ -1,10 +1,15 @@
 package com.ozangunalp.kafka.test.container;
 
+import static java.util.regex.Pattern.quote;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -20,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.io.TempDir;
 import org.testcontainers.containers.Network;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.MountableFile;
@@ -238,6 +244,39 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
+    void testKraftClusterWithOneControllerOnlyNode(@TempDir Path tempDir) throws Exception {
+        String clusterId = Uuid.randomUuid().toString();
+        String brokerController = "broker-controller";
+        String controllerOnly = "controller";
+        String quorumVotes = String.format("1@%s:9094,2@%s:9094", brokerController, controllerOnly);
+
+        try (var network = Network.newNetwork();
+             var b1 = createKafkaNativeContainer(brokerController);
+             var b2 = createKafkaNativeContainer(controllerOnly)) {
+
+            b1.addEnv("SERVER_CLUSTER_ID", clusterId);
+            b1.addEnv("KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
+            b1.withNetworkAliases(brokerController);
+            b1.withNetwork(network);
+            b1.addEnv("SERVER_HOST", brokerController);
+            b1.addEnv("KAFKA_BROKER_ID", "1");
+
+            b2.addEnv("SERVER_CLUSTER_ID", clusterId);
+            b2.withNetworkAliases(controllerOnly);
+            b2.withNetwork(network);
+            b2.withAutoConfigure(false);
+            Map<String, String> replacements = Map.of("${QUORUM_VOTERS}", quorumVotes, "${NODE_ID}", "2");
+            MountableFile controllerProps = classpathResourceWithStringsReplaced("controller_only.properties", tempDir, replacements);
+            b2.withServerProperties(controllerProps);
+
+            Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
+
+            verifyClusterMembers(b1, Map.of(), 1);
+            checkProduceConsume(b1);
+        }
+    }
+
+    @Test
     void testKraftClusterOneController() throws Exception {
         String clusterId = Uuid.randomUuid().toString();
         String broker1 = "broker1";
@@ -271,4 +310,14 @@ public class KafkaNativeContainerIT {
         }
     }
 
+    MountableFile classpathResourceWithStringsReplaced(String resourceName, Path tempDir, Map<String, String> replacements) throws IOException {
+        MountableFile serverPropertiesFile = MountableFile.forClasspathResource(resourceName);
+        String props = Files.readString(Path.of(serverPropertiesFile.getFilesystemPath()), StandardCharsets.UTF_8);
+        for (Map.Entry<String, String> entry : replacements.entrySet()) {
+            props = props.replaceAll(quote(entry.getKey()), entry.getValue());
+        }
+        Path out = tempDir.resolve("controller_only.properties");
+        Files.writeString(out, props, StandardCharsets.UTF_8);
+        return MountableFile.forHostPath(out);
+    }
 }

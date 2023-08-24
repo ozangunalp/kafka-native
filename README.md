@@ -100,6 +100,7 @@ Following configuration options are available:
 | `server.host`                 | Hostname of listeners                                     | `` (empty string)  |
 | `server.cluster-id`           | Provide `cluster-id`, generated if empty                  |                    |
 | `server.properties-file`      | Path to `server.properties` file                          |                    |
+| `server.auto-configure `      | Automatically configure server properties                 | true               |
 | `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if | `./target/log-dir` |
 | `kafka.advertised.listeners`  | Override `advertised.listeners`                           |                    |
 | `kafka.zookeeper.connect`     | When configured the kafka broker starts in zookeeper mode | ``                 |

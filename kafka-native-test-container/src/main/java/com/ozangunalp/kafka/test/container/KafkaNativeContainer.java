@@ -27,6 +27,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
     private String additionalArgs = null;
     private int exposedPort = -1;
     private Function<GenericContainer<?>, Consumer<OutputFrame>> outputFrameConsumer;
+    private boolean autoConfigure = true;
 
     public static DockerImageName imageName(String version) {
         return DockerImageName.parse(DEFAULT_REPOSITORY + ":" + version);
@@ -64,6 +65,12 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         return self();
     }
 
+    public KafkaNativeContainer withAutoConfigure(boolean autoConfigure) {
+        assertNotRunning();
+        this.autoConfigure = autoConfigure;
+        return self();
+    }
+
     public KafkaNativeContainer withAdvertisedListeners(final Function<KafkaNativeContainer, String> provider) {
         assertNotRunning();
         this.advertisedListenersProvider = provider;
@@ -96,6 +103,7 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         if (hasServerProperties) {
             cmd += " -Dserver.properties-file=" + SERVER_PROPERTIES;
         }
+        cmd += " -Dserver.auto-configure=" + autoConfigure;
         if (additionalArgs != null) {
             cmd += " " + additionalArgs;
         }
