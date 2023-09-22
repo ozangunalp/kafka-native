@@ -46,6 +46,7 @@ public class EmbeddedKafkaBroker implements Closeable {
     private String clusterId = Uuid.randomUuid().toString();
     private final Properties brokerConfig = new Properties();
     public SecurityProtocol defaultProtocol = PLAINTEXT;
+    private boolean autoConfigure = true;
 
     /**
      * Configure properties for the broker.
@@ -56,6 +57,19 @@ public class EmbeddedKafkaBroker implements Closeable {
     public EmbeddedKafkaBroker withConfig(Consumer<Properties> function) {
         assertNotRunning();
         function.accept(this.brokerConfig);
+        return this;
+    }
+
+    /**
+     * Automatically configure broker for embedded testing, exposing relevant listeners, configuring broker to run
+     * in KRaft mode if required, tuning timeouts. See {@link BrokerConfig} for details. Disabling autoConfigure should
+     * be used in combination with user supplied configuration.
+     *
+     * @param autoConfigure autoConfigure
+     * @return this {@link EmbeddedKafkaBroker}
+     */
+    public EmbeddedKafkaBroker withAutoConfigure(boolean autoConfigure) {
+        this.autoConfigure = autoConfigure;
         return this;
     }
 
@@ -172,9 +186,12 @@ public class EmbeddedKafkaBroker implements Closeable {
             return this;
         }
 
-        BrokerConfig.providedConfig(brokerConfig);
-        BrokerConfig.defaultStaticConfig(brokerConfig);
-        BrokerConfig.defaultCoreConfig(brokerConfig, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
+        if (autoConfigure) {
+            LOGGER.info("auto-configuring server");
+            BrokerConfig.providedConfig(brokerConfig);
+            BrokerConfig.defaultStaticConfig(brokerConfig);
+            BrokerConfig.defaultCoreConfig(brokerConfig, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
+        }
 
         Storage.ensureLogDirExists(brokerConfig);
 

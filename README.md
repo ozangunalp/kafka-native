@@ -91,19 +91,20 @@ By default, the `kafka-server` application configures an embedded Kafka Kraft se
 
 Following configuration options are available:
 
-| Key                           | Description                                               | Default            |
-|-------------------------------|-----------------------------------------------------------|--------------------|
-| `server.kafka-port`           | External listener port                                    | 9092               |
-| `server.internal-port`        | Internal listener port                                    | 9093               |
-| `server.controller-port`      | Controller listener port                                  | 9094               |
-| `server.delete-dirs-on-close` | Whether to delete `log-dir` on application close          | false              |
-| `server.host`                 | Hostname of listeners                                     | `` (empty string)  |
-| `server.cluster-id`           | Provide `cluster-id`, generated if empty                  |                    |
-| `server.properties-file`      | Path to `server.properties` file                          |                    |
-| `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if | `./target/log-dir` |
-| `kafka.advertised.listeners`  | Override `advertised.listeners`                           |                    |
-| `kafka.zookeeper.connect`     | When configured the kafka broker starts in zookeeper mode | ``                 |
-| `kafka.*`                     | Override broker properties                                |                    |
+| Key                           | Description                                                                               | Default            |
+|-------------------------------|-------------------------------------------------------------------------------------------|--------------------|
+| `server.kafka-port`           | External listener port                                                                    | 9092               |
+| `server.internal-port`        | Internal listener port                                                                    | 9093               |
+| `server.controller-port`      | Controller listener port                                                                  | 9094               |
+| `server.delete-dirs-on-close` | Whether to delete `log-dir` on application close                                          | false              |
+| `server.host`                 | Hostname of listeners                                                                     | `` (empty string)  |
+| `server.cluster-id`           | Provide `cluster-id`, generated if empty                                                  |                    |
+| `server.properties-file`      | Path to `server.properties` file                                                          |                    |
+| `server.auto-configure `      | Automatically configure server properties, if false only `server.properties` is respected | true               |
+| `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if                                 | `./target/log-dir` |
+| `kafka.advertised.listeners`  | Override `advertised.listeners`                                                           |                    |
+| `kafka.zookeeper.connect`     | When configured the kafka broker starts in zookeeper mode                                 | ``                 |
+| `kafka.*`                     | Override broker properties                                                                |                    |
 
 
 You can set configuration options using Java system properties, e.g.

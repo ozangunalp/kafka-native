@@ -27,4 +27,7 @@ public interface ServerConfig {
 
     Optional<Path> propertiesFile();
 
+    @WithDefault("true")
+    boolean autoConfigure();
+
 }

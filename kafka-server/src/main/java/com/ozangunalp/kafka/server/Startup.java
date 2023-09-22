@@ -27,6 +27,7 @@ public class Startup {
                 .withControllerPort(config.controllerPort())
                 .withInternalPort(config.internalPort())
                 .withKafkaHost(config.host().orElse(""))
+                .withAutoConfigure(config.autoConfigure())
                 .withConfig(properties -> {
                     properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
                     config.propertiesFile().ifPresent(Unchecked.consumer(file -> 
