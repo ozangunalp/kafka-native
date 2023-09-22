@@ -1,21 +1,7 @@
 package com.ozangunalp.kafka.test.container;
 
-import static java.util.regex.Pattern.quote;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
+import com.ozangunalp.kafka.server.Endpoints;
+import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Uuid;
@@ -25,13 +11,28 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.io.TempDir;
 import org.testcontainers.containers.Network;
+import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.MountableFile;
 
-import com.ozangunalp.kafka.server.Endpoints;
-import io.smallrye.reactive.messaging.kafka.companion.KafkaCompanion;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.regex.Pattern.quote;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 public class KafkaNativeContainerIT {
 
@@ -54,7 +55,7 @@ public class KafkaNativeContainerIT {
     public void initTopic(TestInfo testInfo) {
         String cn = testInfo.getTestClass().map(Class::getSimpleName).orElse(UUID.randomUUID().toString());
         String mn = testInfo.getTestMethod().map(Method::getName).orElse(UUID.randomUUID().toString());
-        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""), 
+        testOutputName = String.format("%s.%s", testInfo.getDisplayName().replaceAll("\\(\\)$", ""),
                 OffsetDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH.mm.ss")));
         topic = cn + "-" + mn + "-" + UUID.randomUUID().getMostSignificantBits();
     }
@@ -244,7 +245,7 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
-    void testKraftClusterWithOneControllerOnlyNode(@TempDir Path tempDir) throws Exception {
+    void testKraftClusterWithOneControllerOnlyNode() throws Exception {
         String clusterId = Uuid.randomUuid().toString();
         String brokerController = "broker-controller";
         String controllerOnly = "controller";
@@ -265,14 +266,42 @@ public class KafkaNativeContainerIT {
             b2.withNetworkAliases(controllerOnly);
             b2.withNetwork(network);
             b2.withAutoConfigure(false);
-            Map<String, String> replacements = Map.of("${QUORUM_VOTERS}", quorumVotes, "${NODE_ID}", "2");
-            MountableFile controllerProps = classpathResourceWithStringsReplaced("controller_only.properties", tempDir, replacements);
+            Transferable controllerProps = controllerOnlyProperties(quorumVotes, "2");
             b2.withServerProperties(controllerProps);
 
             Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
 
             verifyClusterMembers(b1, Map.of(), 1);
             checkProduceConsume(b1);
+        }
+    }
+
+    private Transferable controllerOnlyProperties(String quorumVotes, String nodeId) {
+        Properties properties = new Properties();
+        properties.put("process.roles", "controller");
+        properties.put("node.id", nodeId);
+        properties.put("controller.quorum.voters", quorumVotes);
+        properties.put("listeners", "CONTROLLER://:9094");
+        properties.put("controller.listener.names", "CONTROLLER");
+        properties.put("num.network.threads", "1");
+        properties.put("num.io.threads", "1");
+        properties.put("socket.send.buffer.bytes", "102400");
+        properties.put("socket.receive.buffer.bytes", "102400");
+        properties.put("socket.request.max.bytes", "104857600");
+        properties.put("log.dirs", "/tmp/kraft-controller-logs");
+        properties.put("num.partitions", "1");
+        properties.put("num.num.recovery.threads.per.data.dir", "1");
+        properties.put("offsets.topic.replication.factor", "1");
+        properties.put("transaction.state.log.replication.factor", "1");
+        properties.put("transaction.state.log.min.isr", "1");
+        properties.put("log.retention.hours", "168");
+        properties.put("log.segment.bytes", "1073741824");
+        properties.put("log.retention.check.interval.ms", "300000");
+        try (StringWriter writer = new StringWriter()) {
+            properties.store(writer, null);
+            return Transferable.of(writer.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -310,14 +339,4 @@ public class KafkaNativeContainerIT {
         }
     }
 
-    MountableFile classpathResourceWithStringsReplaced(String resourceName, Path tempDir, Map<String, String> replacements) throws IOException {
-        MountableFile serverPropertiesFile = MountableFile.forClasspathResource(resourceName);
-        String props = Files.readString(Path.of(serverPropertiesFile.getFilesystemPath()), StandardCharsets.UTF_8);
-        for (Map.Entry<String, String> entry : replacements.entrySet()) {
-            props = props.replaceAll(quote(entry.getKey()), entry.getValue());
-        }
-        Path out = tempDir.resolve("controller_only.properties");
-        Files.writeString(out, props, StandardCharsets.UTF_8);
-        return MountableFile.forHostPath(out);
-    }
 }

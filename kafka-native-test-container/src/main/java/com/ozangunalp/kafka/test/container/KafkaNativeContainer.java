@@ -58,9 +58,9 @@ public class KafkaNativeContainer extends GenericContainer<KafkaNativeContainer>
         return self();
     }
 
-    public KafkaNativeContainer withServerProperties(MountableFile serverPropertiesFile) {
+    public KafkaNativeContainer withServerProperties(Transferable transferable) {
         assertNotRunning();
-        super.withCopyFileToContainer(serverPropertiesFile, SERVER_PROPERTIES);
+        super.withCopyToContainer(transferable, SERVER_PROPERTIES);
         this.hasServerProperties = true;
         return self();
     }

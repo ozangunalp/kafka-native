@@ -187,11 +187,10 @@ public class EmbeddedKafkaBroker implements Closeable {
         }
 
         if (autoConfigure) {
+            LOGGER.info("auto-configuring server");
             BrokerConfig.providedConfig(brokerConfig);
             BrokerConfig.defaultStaticConfig(brokerConfig);
             BrokerConfig.defaultCoreConfig(brokerConfig, host, kafkaPort, internalPort, controllerPort, defaultProtocol);
-        } else {
-            LOGGER.info("skipping auto-configuration of server");
         }
 
         Storage.ensureLogDirExists(brokerConfig);
