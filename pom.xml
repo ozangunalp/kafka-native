@@ -73,7 +73,7 @@
         <quarkus.platform.version>3.4.1</quarkus.platform.version>
 
         <kafka.version>3.5.1</kafka.version>
-        <zookeeper.version>3.9.0</zookeeper.version>
+        <zookeeper.version>3.9.1</zookeeper.version>
         <scala.version>2.13.12</scala.version>
 
         <strimzi-oauth.version>0.13.0</strimzi-oauth.version>
