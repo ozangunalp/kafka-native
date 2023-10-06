@@ -126,14 +126,13 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, org.apache.kafka.common.metrics.JmxReporter.class));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());
     }
 
     @BuildStep
     private void strimziOAuth(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<RuntimeInitializedClassBuildItem> producer) {
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, false,
-                "io.strimzi.kafka.oauth.server.JaasServerOauthValidatorCallbackHandler"));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("io.strimzi.kafka.oauth.server.JaasServerOauthValidatorCallbackHandler").build());
         producer.produce(new RuntimeInitializedClassBuildItem(
                 "io.strimzi.kafka.oauth.server.JaasServerOauthValidatorCallbackHandler"));
         producer.produce(new RuntimeInitializedClassBuildItem(
@@ -141,7 +140,7 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem(
                 "io.strimzi.kafka.oauth.server.plain.JaasServerOauthOverPlainValidatorCallbackHandler"));
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(
                 "org.keycloak.jose.jws.JWSHeader",
                 "org.keycloak.representations.AccessToken",
                 "org.keycloak.representations.AccessToken$Access",
@@ -151,16 +150,17 @@ class KafkaServerExtensionProcessor {
                 "org.keycloak.jose.jwk.JSONWebKeySet",
                 "org.keycloak.jose.jwk.JWK",
                 "org.keycloak.json.StringOrArrayDeserializer",
-                "org.keycloak.json.StringListMapDeserializer"));
+                "org.keycloak.json.StringListMapDeserializer").methods().fields().build());
     }
 
     @BuildStep
     private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<RuntimeInitializedClassBuildItem> producer) {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(
                 "sun.security.provider.ConfigFile",
-                "org.apache.zookeeper.ClientCnxnSocketNIO"));
+                "org.apache.zookeeper.ClientCnxnSocketNIO")
+                .methods().fields().build());
     }
 
     @BuildStep
@@ -176,36 +176,36 @@ class KafkaServerExtensionProcessor {
             BuildProducer<NativeImageSecurityProviderBuildItem> securityProviders) {
 
         reflectiveClass.produce(
-                new ReflectiveClassBuildItem(false, false, AbstractLogin.DefaultLoginCallbackHandler.class));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, SaslServerCallbackHandler.class));
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, DefaultLogin.class));
+                ReflectiveClassBuildItem.builder(AbstractLogin.DefaultLoginCallbackHandler.class).build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(SaslServerCallbackHandler.class).build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(DefaultLogin.class).build());
         for (String saslServerFactory : SASL_SERVER_FACTORIES) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(true, false, false, saslServerFactory));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(saslServerFactory).build());
         }
 
         // Enable SSL support if kafka.security.protocol is set to something other than PLAINTEXT, which is the default
         sslNativeSupport.produce(new ExtensionSslNativeSupportBuildItem(FEATURE));
 
         for (ClassInfo login : index.getIndex().getAllKnownImplementors(LOGIN)) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, login.name().toString()));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(login.name().toString()).build());
         }
         for (ClassInfo loginModule : index.getIndex().getAllKnownImplementors(LOGIN_MODULE)) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, loginModule.name().toString()));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(loginModule.name().toString()).build());
         }
         for (ClassInfo principalBuilder : index.getIndex().getAllKnownImplementors(KAFKA_PRINCIPAL_BUILDER)) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, principalBuilder.name().toString()));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(principalBuilder.name().toString()).build());
         }
         for (ClassInfo authenticateCallbackHandler : index.getIndex().getAllKnownImplementors(AUTHENTICATE_CALLBACK_HANDLER)) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, authenticateCallbackHandler.name().toString()));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(authenticateCallbackHandler.name().toString()).build());
         }
         for (String provider : SECURITY_PROVIDERS) {
             securityProviders.produce(new NativeImageSecurityProviderBuildItem(provider));
         }
-        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, Krb5LoginModule.class.getName()));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(Krb5LoginModule.class.getName()).build());
         for (String mechanismFactory : GSSAPI_MECHANISM_FACTORIES) {
-            reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, mechanismFactory));
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(mechanismFactory).build());
         }
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true, "sun.security.jgss.GSSContextImpl"));
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.jgss.GSSContextImpl").methods().fields().build());
     }
 
     @BuildStep
