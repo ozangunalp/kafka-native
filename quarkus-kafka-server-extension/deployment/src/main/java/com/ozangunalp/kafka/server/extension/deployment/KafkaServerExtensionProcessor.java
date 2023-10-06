@@ -156,7 +156,7 @@ class KafkaServerExtensionProcessor {
     @BuildStep
     private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<RuntimeInitializedClassBuildItem> producer) {
-        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.admin.AdminUtils"));
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(
                 "sun.security.provider.ConfigFile",
                 "org.apache.zookeeper.ClientCnxnSocketNIO")
