@@ -22,10 +22,10 @@ class ZookeeperServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("org.apache.zookeeper.server.persistence.FilePadding"));
 
 
-        reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(
                 "sun.security.provider.ConfigFile",
                 "org.apache.zookeeper.ClientCnxnSocketNIO",
                 "org.apache.zookeeper.server.NIOServerCnxnFactory",
-                "org.apache.zookeeper.server.watch.WatchManager"));
+                "org.apache.zookeeper.server.watch.WatchManager").methods().fields().build());
     }
 }
