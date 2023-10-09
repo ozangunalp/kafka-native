@@ -16,6 +16,7 @@ import org.apache.kafka.common.security.plain.internals.PlainSaslServer;
 import org.apache.kafka.common.security.plain.internals.PlainSaslServerProvider;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServer;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServerProvider;
+import org.apache.kafka.coordinator.group.assignor.PartitionAssignor;
 import org.apache.kafka.server.metrics.KafkaYammerMetrics;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
@@ -66,6 +67,9 @@ class KafkaServerExtensionProcessor {
     create.topic.policy.class.name, default: null
     kafka.metrics.reporters, default: null
     metric.reporters, default: null
+
+    group.consumer.assignors, default: org.apache.kafka.coordinator.group.assignor.RangeAssignor
+
     */
 
     private static final Set<String> SECURITY_PROVIDERS = Set.of(
@@ -91,6 +95,7 @@ class KafkaServerExtensionProcessor {
             .createSimple(AuthenticateCallbackHandler.class.getName());
 
     private static final DotName KAFKA_PRINCIPAL_BUILDER = DotName.createSimple(KafkaPrincipalBuilder.class.getName());
+    private static final DotName PARTITION_ASSIGNOR = DotName.createSimple(PartitionAssignor.class.getName());
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -107,6 +112,7 @@ class KafkaServerExtensionProcessor {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka_2.13"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-server-common"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-clients"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-group-coordinator"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server-plain"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-client"));
@@ -156,7 +162,7 @@ class KafkaServerExtensionProcessor {
     @BuildStep
     private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<RuntimeInitializedClassBuildItem> producer) {
-        producer.produce(new RuntimeInitializedClassBuildItem("kafka.admin.AdminUtils$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.admin.AdminUtils"));
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(
                 "sun.security.provider.ConfigFile",
                 "org.apache.zookeeper.ClientCnxnSocketNIO")
@@ -194,6 +200,9 @@ class KafkaServerExtensionProcessor {
         }
         for (ClassInfo principalBuilder : index.getIndex().getAllKnownImplementors(KAFKA_PRINCIPAL_BUILDER)) {
             reflectiveClass.produce(ReflectiveClassBuildItem.builder(principalBuilder.name().toString()).build());
+        }
+        for (ClassInfo partitionAssignor : index.getIndex().getAllKnownImplementors(PARTITION_ASSIGNOR)) {
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(partitionAssignor.name().toString()).build());
         }
         for (ClassInfo authenticateCallbackHandler : index.getIndex().getAllKnownImplementors(AUTHENTICATE_CALLBACK_HANDLER)) {
             reflectiveClass.produce(ReflectiveClassBuildItem.builder(authenticateCallbackHandler.name().toString()).build());
