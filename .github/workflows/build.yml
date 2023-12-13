@@ -58,3 +58,10 @@ jobs:
           tags: quay.io/ogunalp/kafka-native:latest-snapshot quay.io/ogunalp/kafka-native:${{ env.BUILD_IMAGE_TAG }} quay.io/ogunalp/zookeeper-native:latest-snapshot quay.io/ogunalp/zookeeper-native:${{ env.BUILD_IMAGE_TAG }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-logs
+          retention-days: 3
+          path: kafka-native-test-container/target/container-logs/
