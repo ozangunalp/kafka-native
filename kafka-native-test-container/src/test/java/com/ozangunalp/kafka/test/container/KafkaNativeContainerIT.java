@@ -164,6 +164,11 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testKerberosContainer() {
+        testKerberos();
+        testKerberos();
+    }
+
+    private void testKerberos() {
         try (KerberosContainer kerberos = new KerberosContainer("gcavalcante8808/krb5-server")) {
             kerberos.start();
             kerberos.followOutput(new ToFileConsumer(testOutputName, kerberos));
@@ -186,6 +191,7 @@ public class KafkaNativeContainerIT {
                                 "useKeyTab=true " +
                                 "storeKey=true " +
                                 "debug=true " +
+                                "refreshKrb5Config=true " +
                                 "serviceName=\"kafka\" " +
                                 "keyTab=\"src/test/resources/kerberos/client.keytab\" " +
                                 "principal=\"client/localhost@EXAMPLE.COM\";",
