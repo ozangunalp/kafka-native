@@ -57,7 +57,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <compiler-plugin.version>3.11.0</compiler-plugin.version>
+        <compiler-plugin.version>3.12.0</compiler-plugin.version>
         <surefire-plugin.version>3.2.3</surefire-plugin.version>
         <failsafe-plugin.version>3.2.3</failsafe-plugin.version>
         <release-plugin.version>3.0.1</release-plugin.version>
