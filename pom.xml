@@ -66,7 +66,7 @@
         <javadoc-plugin.version>3.6.3</javadoc-plugin.version>
         <gpg-plugin.version>3.1.0</gpg-plugin.version>
         <nexus-staging-plugin.version>1.6.13</nexus-staging-plugin.version>
-        <jreleaser-plugin.version>1.9.0</jreleaser-plugin.version>
+        <jreleaser-plugin.version>1.10.0</jreleaser-plugin.version>
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
