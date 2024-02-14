@@ -82,7 +82,7 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
 COPY target/lib/* /deployments/lib/
 COPY target/*-runner.jar /deployments/quarkus-run.jar
-RUN mkdir /deployments/target/log-dir
+RUN mkdir -m 777 -p /deployments/target/log-dir
 
 EXPOSE 9092
 USER 185
