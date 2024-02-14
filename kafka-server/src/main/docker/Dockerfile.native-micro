@@ -26,6 +26,6 @@ COPY --chown=1001:root target/*-runner /work/kafka
 
 EXPOSE 9092
 USER 1001
-RUN mkdir -p /work/target/log-dir
+RUN mkdir -m 777 -p /work/target/log-dir
 
 CMD ["./kafka"]
