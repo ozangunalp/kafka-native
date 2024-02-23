@@ -72,7 +72,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.7.4</quarkus.platform.version>
 
-        <kafka.version>3.6.1</kafka.version>
+        <kafka.version>3.7.0</kafka.version>
         <zookeeper.version>3.9.1</zookeeper.version>
         <scala.version>2.13.13</scala.version>
 
@@ -121,6 +121,11 @@
             <dependency>
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-storage</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-metadata</artifactId>
                 <version>${kafka.version}</version>
             </dependency>
             <dependency>
@@ -206,6 +211,17 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <!-- TMP to test out the staged RC. Do Not Merge -->
+    <repositories>
+        <repository>
+            <id>apache staging</id>
+            <url>https://repository.apache.org/content/groups/staging/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- Test -->
