@@ -127,9 +127,12 @@ class KafkaServerExtensionProcessor {
             "org.apache.kafka.common.security.oauthbearer.internals.expiring.ExpiringCredentialRefreshingLogin"));
         producer.produce(new RuntimeInitializedClassBuildItem(
             "org.apache.kafka.common.security.kerberos.KerberosLogin"));
-        
+        producer.produce(new RuntimeInitializedClassBuildItem(
+            "org.apache.kafka.storage.internals.log.LogSegment"));
+
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedRemoteFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
 
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());

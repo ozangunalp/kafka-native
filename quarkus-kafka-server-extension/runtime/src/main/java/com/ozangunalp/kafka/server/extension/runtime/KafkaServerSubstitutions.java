@@ -18,7 +18,6 @@ import org.apache.kafka.common.utils.Utils;
 import org.jboss.logmanager.LogContext;
 
 import com.oracle.svm.core.annotate.Alias;
-import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.InjectAccessors;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
@@ -105,21 +104,7 @@ final class Target_LogConfig {
 
 }
 
-@TargetClass(className = "kafka.log.LogFlushStats$")
-final class Target_LogFlushStats {
-
-    @Delete
-    private static Target_com_yammer_metrics_core_Timer logFlushTimer;
-
-}
-
-// Used in kafka.log.LogFlushStats.logFlushTimer
-@TargetClass(className = "com.yammer.metrics.core.Timer")
-final class Target_com_yammer_metrics_core_Timer {
-
-}
-
-@TargetClass(className = "kafka.log.LogSegment")
+@TargetClass(className = "org.apache.kafka.storage.internals.log.LogSegment")
 final class Target_LogSegment {
 
     @Alias
