@@ -225,6 +225,7 @@ class KafkaServerExtensionProcessor {
             reflectiveClass.produce(ReflectiveClassBuildItem.builder(mechanismFactory).build());
         }
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.jgss.GSSContextImpl").methods().fields().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("org.apache.kafka.common.network.ListenerName[]").unsafeAllocated().build());
     }
 
     @BuildStep
