@@ -1,6 +1,11 @@
 package com.ozangunalp.kafka.server.extension.deployment;
 
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.PUTSTATIC;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import javax.security.auth.spi.LoginModule;
 
@@ -18,15 +23,18 @@ import org.apache.kafka.common.security.scram.internals.ScramSaslServer;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServerProvider;
 import org.apache.kafka.coordinator.group.assignor.PartitionAssignor;
 import org.apache.kafka.server.metrics.KafkaYammerMetrics;
+import org.apache.kafka.storage.internals.log.LogSegment;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import com.ozangunalp.kafka.server.extension.runtime.JsonPathConfigRecorder;
 import com.sun.security.auth.module.Krb5LoginModule;
+
 import io.quarkus.deployment.IsNormal;
 import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
@@ -41,6 +49,7 @@ import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageSecurityProviderBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
+import io.quarkus.deployment.pkg.steps.NativeBuild;
 import io.quarkus.gizmo.Gizmo;
 
 class KafkaServerExtensionProcessor {
@@ -106,7 +115,7 @@ class KafkaServerExtensionProcessor {
     RunTimeConfigurationDefaultBuildItem deleteDirsOnClose() {
         return new RunTimeConfigurationDefaultBuildItem("server.delete-dirs-on-close", "true");
     }
-    
+
     @BuildStep
     void index(BuildProducer<IndexDependencyBuildItem> indexDependency) {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka_2.13"));
@@ -117,7 +126,7 @@ class KafkaServerExtensionProcessor {
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server-plain"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-client"));
     }
-    
+
     @BuildStep
     void build(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<RuntimeInitializedClassBuildItem> producer) {
@@ -127,8 +136,6 @@ class KafkaServerExtensionProcessor {
             "org.apache.kafka.common.security.oauthbearer.internals.expiring.ExpiringCredentialRefreshingLogin"));
         producer.produce(new RuntimeInitializedClassBuildItem(
             "org.apache.kafka.common.security.kerberos.KerberosLogin"));
-        producer.produce(new RuntimeInitializedClassBuildItem(
-            "org.apache.kafka.storage.internals.log.LogSegment"));
 
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
@@ -284,11 +291,8 @@ class KafkaServerExtensionProcessor {
 
     private static class CoreUtilsClassVisitor extends ClassVisitor {
 
-        private final String fqcn;
-
         protected CoreUtilsClassVisitor(String fqcn, ClassVisitor classVisitor) {
             super(Gizmo.ASM_API_VERSION, classVisitor);
-            this.fqcn = fqcn;
         }
 
         @Override
@@ -319,4 +323,47 @@ class KafkaServerExtensionProcessor {
         }
 
     }
+
+    @BuildStep(onlyIf = { NativeBuild.class })
+    void logSegmentStaticBlock(BuildProducer<BytecodeTransformerBuildItem> producer) {
+        producer.produce(new BytecodeTransformerBuildItem(LogSegment.class.getName(), LogSegmentStaticBlockRemover::new));
+    }
+
+    private class LogSegmentStaticBlockRemover extends ClassVisitor {
+        public LogSegmentStaticBlockRemover(String fqcn, ClassVisitor cv) {
+            super(Gizmo.ASM_API_VERSION, cv);
+        }
+
+        // invoked for every method
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+            MethodVisitor visitor = super.visitMethod(access, name, desc, signature, exceptions);
+            if (visitor == null) {
+                return null;
+            }
+            if (name.equals("<clinit>")) {
+                return new MethodVisitor(Gizmo.ASM_API_VERSION, visitor) {
+                    @Override
+                    public void visitCode() {
+                        // Load LogSegment class
+                        visitLdcInsn(Type.getType(LogSegment.class));
+                        // Invoke LoggerFactory.getLogger
+                        visitMethodInsn(INVOKESTATIC, "org/slf4j/LoggerFactory", "getLogger", "(Ljava/lang/Class;)Lorg/slf4j/Logger;", false);
+                        // Store the result in the LOGGER field
+                        visitFieldInsn(PUTSTATIC, Type.getInternalName(LogSegment.class), "LOGGER", "Lorg/slf4j/Logger;");
+                        // Load null onto the stack
+                        visitInsn(ACONST_NULL);
+                        // Store null into LOG_FLUSH_TIMER field
+                        visitFieldInsn(PUTSTATIC, Type.getInternalName(LogSegment.class), "LOG_FLUSH_TIMER", "Lcom/yammer/metrics/core/Timer;");
+                        // Continue with the original static block code
+                        mv.visitInsn(Opcodes.RETURN);// our new code
+                    }
+                };
+            }
+            visitor.visitMaxs(0, 0);
+            return visitor;
+        }
+
+    }
+
 }
