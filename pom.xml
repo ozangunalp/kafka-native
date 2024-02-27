@@ -212,17 +212,6 @@
         </dependencies>
     </dependencyManagement>
 
-    <!-- TMP to test out the staged RC. Do Not Merge -->
-    <repositories>
-        <repository>
-            <id>apache staging</id>
-            <url>https://repository.apache.org/content/groups/staging/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
-
     <dependencies>
         <!-- Test -->
         <dependency>
