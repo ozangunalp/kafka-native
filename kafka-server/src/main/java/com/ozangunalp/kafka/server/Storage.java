@@ -15,7 +15,7 @@ import java.util.UUID;
 import org.jboss.logging.Logger;
 
 import kafka.server.KafkaConfig;
-import kafka.server.MetaProperties;
+import org.apache.kafka.metadata.properties.MetaProperties;
 import kafka.tools.StorageTool;
 import scala.collection.immutable.Seq;
 import scala.jdk.CollectionConverters;
@@ -58,7 +58,7 @@ public final class Storage {
     }
 
     public static void formatStorage(List<String> directories, String clusterId, int nodeId, boolean ignoreFormatted) {
-        MetaProperties metaProperties = new MetaProperties(clusterId, nodeId);
+        MetaProperties metaProperties = new MetaProperties.Builder().setClusterId(clusterId).setNodeId(nodeId).build();
         Seq<String> dirs = CollectionConverters.ListHasAsScala(directories).asScala().toSeq();
         StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), dirs, metaProperties, 
                 MINIMUM_BOOTSTRAP_VERSION, ignoreFormatted);
