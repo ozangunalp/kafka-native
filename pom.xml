@@ -74,7 +74,7 @@
 
         <kafka.version>3.7.0</kafka.version>
         <zookeeper.version>3.9.2</zookeeper.version>
-        <scala.version>2.13.13</scala.version>
+        <scala.version>2.13.14</scala.version>
 
         <strimzi-oauth.version>0.15.0</strimzi-oauth.version>
         <assertj.version>3.26.0</assertj.version>
