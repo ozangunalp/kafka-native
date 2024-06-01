@@ -1,11 +1,13 @@
 package com.ozangunalp.kafka.server;
 
 import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
+import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
 
 import java.io.Closeable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -17,6 +19,7 @@ import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.server.common.MetadataVersion;
 import org.jboss.logging.Logger;
 
 import kafka.cluster.EndPoint;
@@ -202,7 +205,9 @@ public class EmbeddedKafkaBroker implements Closeable {
         if (zkMode) {
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
-            Storage.formatStorageFromConfig(config, clusterId, true);
+            // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
+            var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(KafkaConfig.InterBrokerProtocolVersionProp(), MetadataVersion.LATEST_PRODUCTION.version()));
+            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();

@@ -1,24 +1,21 @@
 package com.ozangunalp.kafka.server;
 
-import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.kafka.server.common.MetadataVersion;
 import org.jboss.logging.Logger;
 
 import kafka.server.KafkaConfig;
 import org.apache.kafka.metadata.properties.MetaProperties;
 import kafka.tools.StorageTool;
 import scala.collection.immutable.Seq;
-import scala.jdk.CollectionConverters;
 
 public final class Storage {
 
@@ -50,18 +47,11 @@ public final class Storage {
         }
     }
 
-    public static void formatStorageFromConfig(KafkaConfig config, String clusterId, boolean ignoreFormatted) {
+    public static void formatStorageFromConfig(KafkaConfig config, String clusterId, boolean ignoreFormatted, MetadataVersion metadataVersion) {
         Seq<String> directories = StorageTool.configToLogDirectories(config);
         MetaProperties metaProperties = StorageTool.buildMetadataProperties(clusterId, config);
-        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), directories, metaProperties, 
-                MINIMUM_BOOTSTRAP_VERSION, ignoreFormatted);
-    }
-
-    public static void formatStorage(List<String> directories, String clusterId, int nodeId, boolean ignoreFormatted) {
-        MetaProperties metaProperties = new MetaProperties.Builder().setClusterId(clusterId).setNodeId(nodeId).build();
-        Seq<String> dirs = CollectionConverters.ListHasAsScala(directories).asScala().toSeq();
-        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), dirs, metaProperties, 
-                MINIMUM_BOOTSTRAP_VERSION, ignoreFormatted);
+        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), directories, metaProperties,
+                metadataVersion, ignoreFormatted);
     }
 
     public static class LoggingOutputStream extends java.io.OutputStream {

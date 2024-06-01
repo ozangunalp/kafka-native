@@ -20,9 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
@@ -30,7 +27,6 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.regex.Pattern.quote;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -107,15 +103,27 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
-    void testSaslContainer() {
+    void testSaslPlainContainer() {
         try (var container = createKafkaNativeContainer()
-                .withServerProperties(MountableFile.forClasspathResource("sasl_plaintext.properties"))
+                .withServerProperties(MountableFile.forClasspathResource("sasl_plain_plaintext.properties"))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             container.start();
             checkProduceConsume(container, Map.of(
                     CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
                     SaslConfigs.SASL_MECHANISM, "PLAIN",
                     SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"client\" password=\"client-secret\";"));
+        }
+    }
+    @Test
+    void testSaslScramContainer() {
+        try (var container = createKafkaNativeContainer()
+                .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
+                .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
+            container.start();
+            checkProduceConsume(container, Map.of(
+                    CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
+                    SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
+                    SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";"));
         }
     }
 
