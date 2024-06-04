@@ -1,6 +1,7 @@
 package com.ozangunalp.kafka.server;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import io.smallrye.config.ConfigMapping;
@@ -29,5 +30,7 @@ public interface ServerConfig {
 
     @WithDefault("true")
     boolean autoConfigure();
+
+    Optional<List<String>> scramCredentials();
 
 }

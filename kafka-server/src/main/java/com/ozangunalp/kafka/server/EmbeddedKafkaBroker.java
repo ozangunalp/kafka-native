@@ -50,6 +50,7 @@ public class EmbeddedKafkaBroker implements Closeable {
     private final Properties brokerConfig = new Properties();
     public SecurityProtocol defaultProtocol = PLAINTEXT;
     private boolean autoConfigure = true;
+    private List<String> scramCredentials = List.of();
 
     /**
      * Configure properties for the broker.
@@ -138,6 +139,18 @@ public class EmbeddedKafkaBroker implements Closeable {
     }
 
     /**
+     * Configure the list of scram credentials for the broker.
+     *
+     * @param scramCredentials the list of strings representing scram credentials.
+     * @return this {@link EmbeddedKafkaBroker}
+     */
+    public EmbeddedKafkaBroker withScramCredentials(List<String> scramCredentials) {
+        assertNotRunning();
+        this.scramCredentials = scramCredentials;
+        return this;
+    }
+
+    /**
      * Configure whether log directories will be deleted on broker shutdown.
      *
      * @param deleteDirsOnClose {@code true}
@@ -207,7 +220,7 @@ public class EmbeddedKafkaBroker implements Closeable {
         } else {
             // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
             var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(KafkaConfig.InterBrokerProtocolVersionProp(), MetadataVersion.LATEST_PRODUCTION.version()));
-            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion);
+            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, scramCredentials);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();

@@ -11,11 +11,6 @@ import com.ozangunalp.kafka.server.metrics.Reporter;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.smallrye.mutiny.unchecked.Unchecked;
-import org.apache.kafka.server.common.MetadataVersion;
-
-import java.util.Locale;
-
-import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
 
 @ApplicationScoped
 public class Startup {
@@ -39,6 +34,7 @@ public class Startup {
                             properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
         config.clusterId().ifPresent(id -> broker.withClusterId(id));
+        config.scramCredentials().ifPresent(credentials -> broker.withScramCredentials(credentials));
         broker.start();
     }
 

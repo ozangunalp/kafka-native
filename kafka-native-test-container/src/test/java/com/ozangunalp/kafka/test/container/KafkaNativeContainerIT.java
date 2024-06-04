@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
+import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.Network;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.lifecycle.Startables;
@@ -20,14 +21,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 public class KafkaNativeContainerIT {
@@ -114,9 +119,20 @@ public class KafkaNativeContainerIT {
                     SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"client\" password=\"client-secret\";"));
         }
     }
+
+    @Test
+    void testMinimumMetadataVersion() {
+        try (var container = createKafkaNativeContainer()
+                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))) {
+            container.start();
+            checkProduceConsume(container);
+        }
+    }
+
     @Test
     void testSaslScramContainer() {
         try (var container = createKafkaNativeContainer()
+                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client\\,password=client-secret]")
                 .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             container.start();
@@ -124,6 +140,62 @@ public class KafkaNativeContainerIT {
                     CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
                     SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
                     SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";"));
+        }
+    }
+
+    @Test
+    void testSaslScramContainerNotSupported() {
+        try (var container = createKafkaNativeContainer()
+                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client\\,password=client-secret]")
+                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))
+                .withStartupTimeout(Duration.ofSeconds(10))
+                .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
+            assertThatThrownBy(container::start).isInstanceOf(ContainerLaunchException.class);
+            assertThat(container.getLogs()).contains("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
+        }
+    }
+
+    @Test
+    void testSaslScramContainerCluster() throws ExecutionException, InterruptedException, TimeoutException {
+        String clusterId = Uuid.randomUuid().toString();
+        String broker1 = "broker1";
+        String broker2 = "broker2";
+        String quorumVotes = String.format("1@%s:9094,2@%s:9094", broker1, broker2);
+        try (var network = Network.newNetwork();
+             var b1 = createKafkaNativeContainer(broker1)
+                     .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
+                     .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()));
+             var b2 = createKafkaNativeContainer(broker2)
+                     .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
+                     .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
+
+            var common = Map.of(
+                    "SERVER_CLUSTER_ID", clusterId,
+                    "SERVER_SCRAM_CREDENTIALS",
+                    "SCRAM-SHA-512=[name=client\\,password=client-secret],SCRAM-SHA-512=[name=broker\\,password=broker-secret]",
+                    "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
+
+            common.forEach(b1::addEnv);
+            b1.withNetworkAliases(broker1);
+            b1.withNetwork(network);
+            b1.addEnv("SERVER_HOST", broker1);
+            b1.addEnv("KAFKA_BROKER_ID", "1");
+
+            common.forEach(b2::addEnv);
+            b2.withNetworkAliases(broker2);
+            b2.withNetwork(network);
+            b2.addEnv("SERVER_HOST", broker2);
+            b2.addEnv("KAFKA_BROKER_ID", "2");
+
+            Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
+
+            Map<String, Object> clientOptions = Map.of(
+                    CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
+                    SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
+                    SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";");
+            verifyClusterMembers(b1, clientOptions, 2);
+            checkProduceConsume(b1, clientOptions);
+            checkProduceConsume(b2, clientOptions);
         }
     }
 
