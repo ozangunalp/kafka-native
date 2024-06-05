@@ -76,23 +76,26 @@ public final class Storage {
         return new ApiMessageAndVersion(message, (short) 0);
     }
 
-    public static ApiMessageAndVersion metadataVersionMessage(MetadataVersion metadataVersion) {
+    private static ApiMessageAndVersion metadataVersionMessage(MetadataVersion metadataVersion) {
         return withVersion(new FeatureLevelRecord().
                 setName(MetadataVersion.FEATURE_NAME).
                 setFeatureLevel(metadataVersion.featureLevel()));
     }
 
-    public static ApiMessageAndVersion scramMessage(String scramString) {
+    private static ApiMessageAndVersion scramMessage(String scramString) {
         return withVersion(parseScram(scramString));
     }
 
-    public static UserScramCredentialRecord parseScram(String scramString) {
+    static UserScramCredentialRecord parseScram(String scramString) {
         var nameValueRecord = scramString.split("=", 2);
+        if (nameValueRecord.length != 2 || nameValueRecord[0].isEmpty() || nameValueRecord[1].isEmpty()) {
+            throw new IllegalArgumentException("Expecting scram string in the form 'SCRAM-SHA-256=[name=alice,password=alice-secret]', found '%s'. See https://kafka.apache.org/documentation/#security_sasl_scram_credentials".formatted(scramString));
+        }
         return switch (nameValueRecord[0]) {
             case "SCRAM-SHA-256", "SCRAM-SHA-512" ->
                     StorageTool.getUserScramCredentialRecord(nameValueRecord[0], nameValueRecord[1]);
             default ->
-                    throw new IllegalArgumentException("The scram mechanism in " + scramString + " is not supported.");
+                    throw new IllegalArgumentException("The scram mechanism in '" + scramString + "' is not supported.");
         };
     }
 
