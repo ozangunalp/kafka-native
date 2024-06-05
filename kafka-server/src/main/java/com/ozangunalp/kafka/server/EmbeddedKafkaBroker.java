@@ -1,25 +1,29 @@
 package com.ozangunalp.kafka.server;
 
+import static kafka.zk.KafkaZkClient.*;
 import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
-import static org.apache.kafka.server.common.MetadataVersion.MINIMUM_BOOTSTRAP_VERSION;
 
 import java.io.Closeable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import kafka.server.KafkaServer;
 import kafka.server.Server;
+import kafka.zk.AdminZkClient;
+import org.apache.kafka.clients.admin.ScramMechanism;
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.Uuid;
+import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.security.scram.internals.ScramCredentialUtils;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.server.common.MetadataVersion;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.jboss.logging.Logger;
 
 import kafka.cluster.EndPoint;
@@ -215,12 +219,16 @@ public class EmbeddedKafkaBroker implements Closeable {
         this.config = KafkaConfig.fromProps(brokerConfig, false);
         var zkMode = brokerConfig.containsKey(KafkaConfig.ZkConnectProp());
         Server server;
+
+        var scramParser = new ScramParser();
+        var parsedCredentials = scramCredentials.stream().map(scramParser::parseScram).toList();
         if (zkMode) {
+            createScramUsersInZookeeper(parsedCredentials);
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
             // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
             var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(KafkaConfig.InterBrokerProtocolVersionProp(), MetadataVersion.LATEST_PRODUCTION.version()));
-            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, scramCredentials);
+            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, parsedCredentials);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();
@@ -282,4 +290,22 @@ public class EmbeddedKafkaBroker implements Closeable {
         return this.clusterId;
     }
 
+
+    private void createScramUsersInZookeeper(List<UserScramCredentialRecord> parsedCredentials) {
+        if (!parsedCredentials.isEmpty()) {
+            ZKClientConfig zkClientConfig = KafkaServer.zkClientConfigFromKafkaConfig(config, false);
+            try (var zkClient = createZkClient("Kafka native", Time.SYSTEM, config, zkClientConfig)) {
+                var adminZkClient = new AdminZkClient(zkClient, Option.empty());
+                var userEntityType = "users";
+
+                parsedCredentials.forEach(uscr -> {
+                    var userConfig = adminZkClient.fetchEntityConfig(userEntityType, uscr.name());
+                    var credentialsString = ScramCredentialUtils.credentialToString(ScramUtils.asScramCredential(uscr));
+
+                    userConfig.setProperty(ScramMechanism.fromType(uscr.mechanism()).mechanismName(), credentialsString);
+                    adminZkClient.changeConfigs(userEntityType, uscr.name(), userConfig, false);
+                });
+            }
+        }
+    }
 }
