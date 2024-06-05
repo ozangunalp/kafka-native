@@ -132,7 +132,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testSaslScramContainer() {
         try (var container = createKafkaNativeContainer()
-                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client\\,password=client-secret]")
+                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
                 .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             container.start();
@@ -146,7 +146,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testSaslScramContainerNotSupported() {
         try (var container = createKafkaNativeContainer()
-                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client\\,password=client-secret]")
+                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
                 .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))
                 .withStartupTimeout(Duration.ofSeconds(10))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
@@ -172,7 +172,7 @@ public class KafkaNativeContainerIT {
             var common = Map.of(
                     "SERVER_CLUSTER_ID", clusterId,
                     "SERVER_SCRAM_CREDENTIALS",
-                    "SCRAM-SHA-512=[name=client\\,password=client-secret],SCRAM-SHA-512=[name=broker\\,password=broker-secret]",
+                    "SCRAM-SHA-512=[name=client,password=client-secret];SCRAM-SHA-512=[name=broker,password=broker-secret]",
                     "KAFKA_CONTROLLER_QUORUM_VOTERS", quorumVotes);
 
             common.forEach(b1::addEnv);
@@ -301,7 +301,7 @@ public class KafkaNativeContainerIT {
             try (var container = createKafkaNativeContainer()
                     .withNetwork(Network.SHARED)
                     .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")
-                    .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client\\,password=client-secret]")
+                    .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
                     .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
                     .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
                 container.start();

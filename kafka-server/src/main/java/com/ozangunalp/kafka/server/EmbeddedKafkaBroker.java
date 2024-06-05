@@ -1,6 +1,6 @@
 package com.ozangunalp.kafka.server;
 
-import static kafka.zk.KafkaZkClient.*;
+import static kafka.zk.KafkaZkClient.createZkClient;
 import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
 
 import java.io.Closeable;
@@ -11,9 +11,6 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import kafka.server.KafkaServer;
-import kafka.server.Server;
-import kafka.zk.AdminZkClient;
 import org.apache.kafka.clients.admin.ScramMechanism;
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.Uuid;
@@ -29,6 +26,9 @@ import org.jboss.logging.Logger;
 import kafka.cluster.EndPoint;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaRaftServer;
+import kafka.server.KafkaServer;
+import kafka.server.Server;
+import kafka.zk.AdminZkClient;
 import scala.Option;
 import scala.jdk.javaapi.StreamConverters;
 

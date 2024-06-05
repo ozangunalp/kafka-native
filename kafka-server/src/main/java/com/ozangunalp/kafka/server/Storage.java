@@ -15,14 +15,12 @@ import org.apache.kafka.common.metadata.FeatureLevelRecord;
 import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.protocol.ApiMessage;
 import org.apache.kafka.metadata.bootstrap.BootstrapMetadata;
+import org.apache.kafka.metadata.properties.MetaProperties;
 import org.apache.kafka.server.common.ApiMessageAndVersion;
 import org.apache.kafka.server.common.MetadataVersion;
 import org.jboss.logging.Logger;
 
 import kafka.server.KafkaConfig;
-
-import org.apache.kafka.metadata.properties.MetaProperties;
-
 import kafka.tools.StorageTool;
 import scala.collection.immutable.Seq;
 

@@ -28,13 +28,13 @@ public class Startup {
                 .withInternalPort(config.internalPort())
                 .withKafkaHost(config.host().orElse(""))
                 .withAutoConfigure(config.autoConfigure())
+                .withScramCredentials(config.scramCredentialsList())
                 .withConfig(properties -> {
                     properties.put(CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG, Reporter.class.getName());
                     config.propertiesFile().ifPresent(Unchecked.consumer(file -> 
                             properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
         config.clusterId().ifPresent(id -> broker.withClusterId(id));
-        config.scramCredentials().ifPresent(credentials -> broker.withScramCredentials(credentials));
         broker.start();
     }
 
