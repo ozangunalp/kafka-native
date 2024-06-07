@@ -37,10 +37,10 @@ public interface ServerConfig {
      * List of scram credentials, separated by semicolon.
      * <br/>
      * Format of the scram string must be in one of the following forms:
-     * <plaintext>
+     * <pre>
      * SCRAM-SHA-256=[user=alice,password=alice-secret]
      * SCRAM-SHA-512=[user=alice,iterations=8192,salt="N3E=",saltedpassword="YCE="]
-     * </plaintext>
+     * </pre>
      *
      * @return list of scram credentials
      */
