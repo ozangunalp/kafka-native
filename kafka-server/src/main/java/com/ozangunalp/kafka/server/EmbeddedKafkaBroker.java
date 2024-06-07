@@ -1,5 +1,6 @@
 package com.ozangunalp.kafka.server;
 
+import static kafka.zk.KafkaZkClient.createZkClient;
 import static org.apache.kafka.common.security.auth.SecurityProtocol.PLAINTEXT;
 
 import java.io.Closeable;
@@ -10,18 +11,24 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import kafka.server.KafkaServer;
-import kafka.server.Server;
+import org.apache.kafka.clients.admin.ScramMechanism;
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.Uuid;
+import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.common.security.scram.internals.ScramCredentialUtils;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.server.common.MetadataVersion;
+import org.apache.zookeeper.client.ZKClientConfig;
 import org.jboss.logging.Logger;
 
 import kafka.cluster.EndPoint;
 import kafka.server.KafkaConfig;
 import kafka.server.KafkaRaftServer;
+import kafka.server.KafkaServer;
+import kafka.server.Server;
+import kafka.zk.AdminZkClient;
 import scala.Option;
 import scala.jdk.javaapi.StreamConverters;
 
@@ -47,6 +54,7 @@ public class EmbeddedKafkaBroker implements Closeable {
     private final Properties brokerConfig = new Properties();
     public SecurityProtocol defaultProtocol = PLAINTEXT;
     private boolean autoConfigure = true;
+    private List<String> scramCredentials = List.of();
 
     /**
      * Configure properties for the broker.
@@ -135,6 +143,18 @@ public class EmbeddedKafkaBroker implements Closeable {
     }
 
     /**
+     * Configure the list of scram credentials for the broker.
+     *
+     * @param scramCredentials the list of strings representing scram credentials.
+     * @return this {@link EmbeddedKafkaBroker}
+     */
+    public EmbeddedKafkaBroker withScramCredentials(List<String> scramCredentials) {
+        assertNotRunning();
+        this.scramCredentials = scramCredentials;
+        return this;
+    }
+
+    /**
      * Configure whether log directories will be deleted on broker shutdown.
      *
      * @param deleteDirsOnClose {@code true}
@@ -199,10 +219,16 @@ public class EmbeddedKafkaBroker implements Closeable {
         this.config = KafkaConfig.fromProps(brokerConfig, false);
         var zkMode = brokerConfig.containsKey(KafkaConfig.ZkConnectProp());
         Server server;
+
+        var scramParser = new ScramParser();
+        var parsedCredentials = scramCredentials.stream().map(scramParser::parseScram).toList();
         if (zkMode) {
+            createScramUsersInZookeeper(parsedCredentials);
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
-            Storage.formatStorageFromConfig(config, clusterId, true);
+            // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
+            var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(KafkaConfig.InterBrokerProtocolVersionProp(), MetadataVersion.LATEST_PRODUCTION.version()));
+            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, parsedCredentials);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();
@@ -264,4 +290,22 @@ public class EmbeddedKafkaBroker implements Closeable {
         return this.clusterId;
     }
 
+
+    private void createScramUsersInZookeeper(List<UserScramCredentialRecord> parsedCredentials) {
+        if (!parsedCredentials.isEmpty()) {
+            ZKClientConfig zkClientConfig = KafkaServer.zkClientConfigFromKafkaConfig(config, false);
+            try (var zkClient = createZkClient("Kafka native", Time.SYSTEM, config, zkClientConfig)) {
+                var adminZkClient = new AdminZkClient(zkClient, Option.empty());
+                var userEntityType = "users";
+
+                parsedCredentials.forEach(uscr -> {
+                    var userConfig = adminZkClient.fetchEntityConfig(userEntityType, uscr.name());
+                    var credentialsString = ScramCredentialUtils.credentialToString(ScramUtils.asScramCredential(uscr));
+
+                    userConfig.setProperty(ScramMechanism.fromType(uscr.mechanism()).mechanismName(), credentialsString);
+                    adminZkClient.changeConfigs(userEntityType, uscr.name(), userConfig, false);
+                });
+            }
+        }
+    }
 }
