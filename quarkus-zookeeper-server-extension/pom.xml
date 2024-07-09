@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.ozangunalp</groupId>
     <artifactId>kafka-native-parent</artifactId>
-    <version>999-SNAPSHOT</version>
+    <version>0.10.0</version>
   </parent>
   <artifactId>quarkus-zookeeper-server-extension</artifactId>
   <packaging>pom</packaging>
