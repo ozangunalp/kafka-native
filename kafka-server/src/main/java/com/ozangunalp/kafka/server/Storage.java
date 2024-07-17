@@ -27,12 +27,13 @@ import scala.collection.immutable.Seq;
 public final class Storage {
 
     static final Logger LOGGER = Logger.getLogger(Storage.class.getName());
+    public static final String LOG_DIR = "log.dir";
 
     private Storage() {
     }
 
     public static void ensureLogDirExists(Properties properties) {
-        String logDir = properties.getProperty(KafkaConfig.LogDirProp());
+        String logDir = properties.getProperty(LOG_DIR);
         if (logDir != null) {
             try {
                 Files.createDirectories(Paths.get(logDir));
@@ -47,7 +48,7 @@ public final class Storage {
 
     public static void createAndSetLogDir(Properties properties) {
         try {
-            properties.put(KafkaConfig.LogDirProp(),
+            properties.put(LOG_DIR,
                     Files.createTempDirectory(EmbeddedKafkaBroker.KAFKA_PREFIX + UUID.randomUUID()).toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
