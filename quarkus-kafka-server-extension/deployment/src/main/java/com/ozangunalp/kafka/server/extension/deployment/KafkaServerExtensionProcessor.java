@@ -120,6 +120,7 @@ class KafkaServerExtensionProcessor {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka_2.13"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-server-common"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-clients"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-group-coordinator-api"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-group-coordinator"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server-plain"));
