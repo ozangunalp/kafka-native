@@ -1,7 +1,6 @@
 package com.ozangunalp.kafka.server.extension.runtime;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -19,7 +18,6 @@ import org.jboss.logmanager.LogContext;
 
 import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Delete;
-import com.oracle.svm.core.annotate.InjectAccessors;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
 import org.apache.kafka.storage.internals.log.OffsetIndex;
@@ -68,21 +66,6 @@ final class JMXReporting {
     public void close() {
     }
 
-}
-
-@TargetClass(className = "org.apache.kafka.raft.RaftConfig")
-final class Target_RaftConfig {
-
-    @Alias
-    @InjectAccessors(InetSocketAnyAccessor.class)
-    public static InetSocketAddress NON_ROUTABLE_ADDRESS;
-
-}
-
-final class InetSocketAnyAccessor {
-    static InetSocketAddress get() {
-        return new InetSocketAddress("0.0.0.0", 0);
-    }
 }
 
 @TargetClass(className = "org.apache.kafka.storage.internals.log.LogConfig")
