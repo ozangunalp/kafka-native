@@ -42,17 +42,6 @@
         <url>https://github.com/ozangunalp/kafka-native/issues</url>
     </issueManagement>
 
-    <!-- TEMPORARY - CONSUME STAGED ARTEFACTS FOR 3.8.0 - DO NOT COMMIT TO MAIN -->
-    <repositories>
-        <repository>
-            <id>ApacheKafkaStaging</id>
-            <url>https://repository.apache.org/content/groups/staging/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-    </repositories>
-
     <scm>
         <connection>scm:git:git@github.com:ozangunalp/kafka-native.git</connection>
         <developerConnection>scm:git:git@github.com:ozangunalp/kafka-native.git</developerConnection>
