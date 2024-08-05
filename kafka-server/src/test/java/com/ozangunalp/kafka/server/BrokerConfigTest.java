@@ -8,168 +8,167 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
-import kafka.server.KafkaConfig;
 
 class BrokerConfigTest {
 
     @Test
     void testEmptyOverride() {
         Properties properties = BrokerConfig.defaultCoreConfig(new Properties(), "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092,CONTROLLER://:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        assertThat(properties).containsEntry(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER,CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092,CONTROLLER://:9094");
+        assertThat(properties).containsEntry("process.roles", "broker,controller");
+        assertThat(properties).containsEntry("controller.listener.names", "CONTROLLER");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry("early.start.listeners", "BROKER,CONTROLLER");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
     }
 
     @Test
     void testOverrideAdvertisedListeners() {
         Properties props = new Properties();
-        props.put(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
+        props.put("advertised.listeners", "PLAINTEXT://:9092");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092,CONTROLLER://:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        assertThat(properties).containsEntry(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER,CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092,CONTROLLER://:9094");
+        assertThat(properties).containsEntry("process.roles", "broker,controller");
+        assertThat(properties).containsEntry("controller.listener.names", "CONTROLLER");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry("early.start.listeners", "BROKER,CONTROLLER");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
     }
     
     @Test
     void testOverrideProcessRoles() {
         Properties props = new Properties();
-        props.put(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
-        props.put(KafkaConfig.ProcessRolesProp(), "broker");
-        props.put(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
-        props.put(KafkaConfig.QuorumVotersProp(), "1@:9094");
+        props.put("advertised.listeners", "PLAINTEXT://:9092");
+        props.put("process.roles", "broker");
+        props.put("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        props.put("listener.security.protocol.map", "BROKER:PLAINTEXT");
+        props.put("controller.quorum.voters", "1@:9094");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.InterBrokerListenerNameProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.EarlyStartListenersProp());
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+        assertThat(properties).doesNotContainKey("controller.listener.names");
+        assertThat(properties).doesNotContainKey("inter.broker.listener.name");
+        assertThat(properties).doesNotContainKey("early.start.listeners");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("process.roles", "broker");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT");
     }
 
     @Test
     void testOverrideProcessRolesWithNoQuorumVotersOverride() {
         Properties props = new Properties();
-        props.put(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
-        props.put(KafkaConfig.ProcessRolesProp(), "broker");
-        props.put(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+        props.put("advertised.listeners", "PLAINTEXT://:9092");
+        props.put("process.roles", "broker");
+        props.put("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        props.put("listener.security.protocol.map", "BROKER:PLAINTEXT");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.InterBrokerListenerNameProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.EarlyStartListenersProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT");
+        assertThat(properties).doesNotContainKey("controller.listener.names");
+        assertThat(properties).doesNotContainKey("inter.broker.listener.name");
+        assertThat(properties).doesNotContainKey("early.start.listeners");
+        assertThat(properties).doesNotContainKey("controller.quorum.voters");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("process.roles", "broker");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT");
     }
 
     @Test
     void testOverrideListeners() {
         Properties props = new Properties();
-        props.put(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
-        props.put(KafkaConfig.ListenersProp(), "SSL://:9092,CONTROLLER://9093");
-        props.put(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        props.put(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
-        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL,CONTROLLER:PLAINTEXT");
+        props.put("advertised.listeners", "SSL://:9092");
+        props.put("listeners", "SSL://:9092,CONTROLLER://9093");
+        props.put("controller.listener.names", "CONTROLLER");
+        props.put("inter.broker.listener.name", "SSL");
+        props.put("listener.security.protocol.map", "SSL:SSL,CONTROLLER:PLAINTEXT");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "SSL://:9092,CONTROLLER://9093");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        assertThat(properties).containsEntry(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL,CONTROLLER:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "SSL://:9092,CONTROLLER://9093");
+        assertThat(properties).containsEntry("process.roles", "broker,controller");
+        assertThat(properties).containsEntry("controller.listener.names", "CONTROLLER");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "SSL");
+        assertThat(properties).containsEntry("advertised.listeners", "SSL://:9092");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "SSL:SSL,CONTROLLER:PLAINTEXT");
     }
 
     @Test
     void testKraftBrokerRoleOnly() {
         Properties props = new Properties();
-        props.put(KafkaConfig.ProcessRolesProp(), "broker");
-        props.put(KafkaConfig.BrokerIdProp(), "2");
-        props.put(KafkaConfig.QuorumVotersProp(), "1@:9094");
+        props.put("process.roles", "broker");
+        props.put("broker.id", "2");
+        props.put("controller.quorum.voters", "1@:9094");
 
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
 
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "2");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker");
-        assertThat(properties).containsEntry(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "2");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("process.roles", "broker");
+        assertThat(properties).containsEntry("controller.listener.names", "CONTROLLER");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry("early.start.listeners", "BROKER");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
     }
 
     @Test
     void testMergedSecurityProtocolMap() {
         Properties props = new Properties();
-        props.put(KafkaConfig.AdvertisedListenersProp(), "JWT://:9092");
-        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "JWT:SSL");
+        props.put("advertised.listeners", "JWT://:9092");
+        props.put("listener.security.protocol.map", "JWT:SSL");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).containsEntry(KafkaConfig.QuorumVotersProp(), "1@:9094");
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,CONTROLLER://:9094,JWT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ProcessRolesProp(), "broker,controller");
-        assertThat(properties).containsEntry(KafkaConfig.ControllerListenerNamesProp(), "CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "JWT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER,CONTROLLER");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "JWT:SSL,BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).containsEntry("controller.quorum.voters", "1@:9094");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,CONTROLLER://:9094,JWT://:9092");
+        assertThat(properties).containsEntry("process.roles", "broker,controller");
+        assertThat(properties).containsEntry("controller.listener.names", "CONTROLLER");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
+        assertThat(properties).containsEntry("advertised.listeners", "JWT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry("early.start.listeners", "BROKER,CONTROLLER");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "JWT:SSL,BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT");
     }
 
     @Test
     void testZookeeperEmptyOverride() {
         Properties props = new Properties();
-        props.put(KafkaConfig.ZkConnectProp(), "localhost:2181");
+        props.put("zookeeper.connect", "localhost:2181");
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.ProcessRolesProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "BROKER://:9093,PLAINTEXT://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "PLAINTEXT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry(KafkaConfig.EarlyStartListenersProp(), "BROKER");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).doesNotContainKey("controller.quorum.voters");
+        assertThat(properties).doesNotContainKey("process.roles");
+        assertThat(properties).doesNotContainKey("controller.listener.names");
+        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
+        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092,BROKER://:9093");
+        assertThat(properties).containsEntry("early.start.listeners", "BROKER");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
     }
 
     @Test
     void testZookeeperOverride() {
         Properties props = new Properties();
-        props.put(KafkaConfig.ZkConnectProp(), "localhost:2181");
-        props.put(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
-        props.put(KafkaConfig.ListenersProp(), "SSL://:9092");
-        props.put(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
-        props.put(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL");
+        props.put("zookeeper.connect", "localhost:2181");
+        props.put("advertised.listeners", "SSL://:9092");
+        props.put("listeners", "SSL://:9092");
+        props.put("inter.broker.listener.name", "SSL");
+        props.put("listener.security.protocol.map", "SSL:SSL");
 
         Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry(KafkaConfig.BrokerIdProp(), "1");
-        assertThat(properties).doesNotContainKey(KafkaConfig.QuorumVotersProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.ProcessRolesProp());
-        assertThat(properties).doesNotContainKey(KafkaConfig.ControllerListenerNamesProp());
-        assertThat(properties).containsEntry(KafkaConfig.ListenersProp(), "SSL://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.InterBrokerListenerNameProp(), "SSL");
-        assertThat(properties).containsEntry(KafkaConfig.AdvertisedListenersProp(), "SSL://:9092");
-        assertThat(properties).containsEntry(KafkaConfig.ListenerSecurityProtocolMapProp(), "SSL:SSL");
+        assertThat(properties).containsEntry("broker.id", "1");
+        assertThat(properties).doesNotContainKey("controller.quorum.voters");
+        assertThat(properties).doesNotContainKey("process.roles");
+        assertThat(properties).doesNotContainKey("controller.listener.names");
+        assertThat(properties).containsEntry("listeners", "SSL://:9092");
+        assertThat(properties).containsEntry("inter.broker.listener.name", "SSL");
+        assertThat(properties).containsEntry("advertised.listeners", "SSL://:9092");
+        assertThat(properties).containsEntry("listener.security.protocol.map", "SSL:SSL");
     }
 }

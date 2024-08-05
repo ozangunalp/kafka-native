@@ -15,7 +15,10 @@ import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.server.common.MetadataVersion;
+import org.apache.kafka.server.config.ReplicationConfigs;
+import org.apache.kafka.server.config.ZkConfigs;
 import org.jboss.logging.Logger;
 
 import kafka.cluster.EndPoint;
@@ -185,7 +188,7 @@ public class EmbeddedKafkaBroker implements Closeable {
      */
     public EmbeddedKafkaBroker withAdvertisedListeners(String advertisedListeners) {
         assertNotRunning();
-        this.brokerConfig.compute(KafkaConfig.AdvertisedListenersProp(),
+        this.brokerConfig.compute(SocketServerConfigs.ADVERTISED_LISTENERS_CONFIG,
                 (k, v) -> v == null ? advertisedListeners : v + "," + advertisedListeners);
         return this;
     }
@@ -211,7 +214,7 @@ public class EmbeddedKafkaBroker implements Closeable {
 
         long start = System.currentTimeMillis();
         this.config = KafkaConfig.fromProps(brokerConfig, false);
-        var zkMode = brokerConfig.containsKey(KafkaConfig.ZkConnectProp());
+        var zkMode = brokerConfig.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
         Server server;
 
         var scramParser = new ScramParser();
@@ -221,7 +224,7 @@ public class EmbeddedKafkaBroker implements Closeable {
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
             // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
-            var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(KafkaConfig.InterBrokerProtocolVersionProp(), MetadataVersion.LATEST_PRODUCTION.version()));
+            var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(ReplicationConfigs.INTER_BROKER_PROTOCOL_VERSION_CONFIG, MetadataVersion.LATEST_PRODUCTION.version()));
             Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, parsedCredentials);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }

@@ -5,7 +5,6 @@ import static org.objectweb.asm.Opcodes.PUTSTATIC;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 
 import java.util.Set;
-import java.util.function.BiFunction;
 
 import javax.security.auth.spi.LoginModule;
 
@@ -21,7 +20,7 @@ import org.apache.kafka.common.security.plain.internals.PlainSaslServer;
 import org.apache.kafka.common.security.plain.internals.PlainSaslServerProvider;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServer;
 import org.apache.kafka.common.security.scram.internals.ScramSaslServerProvider;
-import org.apache.kafka.coordinator.group.assignor.PartitionAssignor;
+import org.apache.kafka.coordinator.group.api.assignor.PartitionAssignor;
 import org.apache.kafka.server.metrics.KafkaYammerMetrics;
 import org.apache.kafka.storage.internals.log.LogSegment;
 import org.jboss.jandex.ClassInfo;
@@ -121,6 +120,7 @@ class KafkaServerExtensionProcessor {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka_2.13"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-server-common"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-clients"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-group-coordinator-api"));
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-group-coordinator"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server"));
         indexDependency.produce(new IndexDependencyBuildItem("io.strimzi", "kafka-oauth-server-plain"));
