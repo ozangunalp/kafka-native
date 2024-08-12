@@ -3,6 +3,7 @@ package com.ozangunalp.kafka.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import kafka.tools.TerseFailure;
 import org.apache.kafka.clients.admin.ScramMechanism;
 import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.junit.jupiter.api.Test;
@@ -29,14 +30,14 @@ class ScramParserTest {
     @ValueSource(strings = {"", "foo", "foo=", "="})
     void illegalScramStringDetected(String scramString) {
         assertThatThrownBy(() -> SCRAM_PARSER.parseScram(scramString))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(TerseFailure.class);
     }
 
     @Test
     void badMechanismName() {
         var scramString = "UNKNOWN=[name=alice,password=alice-secret]";
         assertThatThrownBy(() -> SCRAM_PARSER.parseScram(scramString))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(TerseFailure.class);
     }
 
 }

@@ -12,13 +12,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.kafka.common.Endpoint;
+import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
+import org.apache.kafka.coordinator.transaction.TransactionLogConfigs;
+import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.raft.QuorumConfig;
+import org.apache.kafka.server.config.KRaftConfigs;
+import org.apache.kafka.server.config.ReplicationConfigs;
+import org.apache.kafka.server.config.ServerConfigs;
+import org.apache.kafka.server.config.ServerLogConfigs;
+import org.apache.kafka.server.config.ZkConfigs;
+import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
-
-import kafka.server.KafkaConfig;
 
 public final class BrokerConfig {
 
@@ -56,7 +65,7 @@ public final class BrokerConfig {
         Endpoint internal = Endpoints.internal(host, internalPort);
         Endpoint controller = Endpoints.controller(host, controllerPort);
         List<Endpoint> advertised = new ArrayList<>();
-        String advertisedListenersStr = props.getProperty(KafkaConfig.AdvertisedListenersProp());
+        String advertisedListenersStr = props.getProperty(SocketServerConfigs.ADVERTISED_LISTENERS_CONFIG);
         if (!Utils.isBlank(advertisedListenersStr)) {
             advertised.addAll(Endpoints.parseEndpoints(advertisedListenersStr, defaultProtocol));
         }
@@ -65,20 +74,20 @@ public final class BrokerConfig {
         }
 
         // Configure node id
-        String brokerId = props.getProperty(KafkaConfig.BrokerIdProp());
+        String brokerId = props.getProperty(ServerConfigs.BROKER_ID_CONFIG);
         if (brokerId == null) {
             brokerId = "1";
-            props.put(KafkaConfig.BrokerIdProp(), brokerId);
+            props.put(ServerConfigs.BROKER_ID_CONFIG, brokerId);
         }
 
-        boolean kraft = !props.containsKey(KafkaConfig.ZkConnectProp());
-        boolean kraftController = !props.containsKey(KafkaConfig.ProcessRolesProp()) ||
-                Arrays.asList(props.getProperty(KafkaConfig.ProcessRolesProp()).split(",")).contains("controller");
+        boolean kraft = !props.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
+        boolean kraftController = !props.containsKey(KRaftConfigs.PROCESS_ROLES_CONFIG) ||
+                Arrays.asList(props.getProperty(KRaftConfigs.PROCESS_ROLES_CONFIG).split(",")).contains("controller");
         if (kraft) {
             // Configure kraft
-            props.putIfAbsent(KafkaConfig.ProcessRolesProp(), "broker,controller");
+            props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
             if (kraftController) {
-                props.putIfAbsent(KafkaConfig.QuorumVotersProp(), brokerId + "@" + controller.host() + ":" + controller.port());
+                props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
             }
         }
 
@@ -86,9 +95,9 @@ public final class BrokerConfig {
         // - no controller.listener.names config
         // - no inter.broker.listener.name config
         // - no listeners config
-        if (!props.containsKey(KafkaConfig.ControllerListenerNamesProp())
-                && !props.containsKey(KafkaConfig.InterBrokerListenerNameProp())
-                && !props.containsKey(KafkaConfig.ListenersProp())) {
+        if (!props.containsKey(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG)
+                && !props.containsKey(ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG)
+                && !props.containsKey(SocketServerConfigs.LISTENERS_CONFIG)) {
             // Configure listeners
             List<String> earlyStartListeners = new ArrayList<>();
             earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);
@@ -105,32 +114,32 @@ public final class BrokerConfig {
                     listeners.put(Endpoints.listenerName(controller), controller);
                 }
                 securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
-                props.put(KafkaConfig.ControllerListenerNamesProp(), Endpoints.listenerName(controller));
+                props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
             }
 
-            props.put(KafkaConfig.ListenersProp(), joinListeners(listeners.values()));
+            props.put(SocketServerConfigs.LISTENERS_CONFIG, joinListeners(listeners.values()));
 
             // Configure internal listener
-            props.put(KafkaConfig.InterBrokerListenerNameProp(), Endpoints.listenerName(internal));
+            props.put(ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG, Endpoints.listenerName(internal));
             advertised.add(internal);
 
             // Configure security protocol map, by respecting existing map
-            props.compute(KafkaConfig.ListenerSecurityProtocolMapProp(), (k, v) ->
+            props.compute(SocketServerConfigs.LISTENER_SECURITY_PROTOCOL_MAP_CONFIG, (k, v) ->
                     mergeSecurityProtocolMap(securityProtocolMapListeners, (String) v));
 
             // Configure early start listeners
-            props.put(KafkaConfig.EarlyStartListenersProp(), String.join(",", earlyStartListeners));
+            props.put(ServerConfigs.EARLY_START_LISTENERS_CONFIG, String.join(",", earlyStartListeners));
         } else {
             LOGGER.warnf("Broker configs %s, %s, %s, %s will not be configured automatically, " +
                             "make sure to provide necessary configuration manually.",
-                    KafkaConfig.ControllerListenerNamesProp(),
-                    KafkaConfig.ListenersProp(),
-                    KafkaConfig.InterBrokerListenerNameProp(),
-                    KafkaConfig.ListenerSecurityProtocolMapProp());
+                    KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG,
+                    SocketServerConfigs.LISTENERS_CONFIG,
+                    ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG,
+                    SocketServerConfigs.LISTENER_SECURITY_PROTOCOL_MAP_CONFIG);
         }
 
         // Configure advertised listeners
-        props.put(KafkaConfig.AdvertisedListenersProp(), joinListeners(advertised));
+        props.put(SocketServerConfigs.ADVERTISED_LISTENERS_CONFIG, joinListeners(advertised));
 
         return props;
     }
@@ -155,24 +164,24 @@ public final class BrokerConfig {
 
     public static Properties defaultStaticConfig(Properties props) {
         // Configure static default props
-        props.putIfAbsent(KafkaConfig.ReplicaSocketTimeoutMsProp(), "1000");
-        props.putIfAbsent(KafkaConfig.ReplicaHighWatermarkCheckpointIntervalMsProp(), String.valueOf(Long.MAX_VALUE));
-        props.putIfAbsent(KafkaConfig.ControllerSocketTimeoutMsProp(), "1000");
-        props.putIfAbsent(KafkaConfig.ControlledShutdownEnableProp(), Boolean.toString(false));
-        props.putIfAbsent(KafkaConfig.ControlledShutdownRetryBackoffMsProp(), "100");
-        props.putIfAbsent(KafkaConfig.DeleteTopicEnableProp(), Boolean.toString(true));
-        props.putIfAbsent(KafkaConfig.AutoCreateTopicsEnableProp(), Boolean.toString(true));
-        props.putIfAbsent(KafkaConfig.LogDeleteDelayMsProp(), "1000");
-        props.putIfAbsent(KafkaConfig.LogCleanerDedupeBufferSizeProp(), "2097152");
-        props.putIfAbsent(KafkaConfig.LogMessageTimestampDifferenceMaxMsProp(), String.valueOf(Long.MAX_VALUE));
-        props.putIfAbsent(KafkaConfig.OffsetsTopicReplicationFactorProp(), "1");
-        props.putIfAbsent(KafkaConfig.OffsetsTopicPartitionsProp(), "5");
-        props.putIfAbsent(KafkaConfig.GroupInitialRebalanceDelayMsProp(), "0");
-        props.putIfAbsent(KafkaConfig.NumPartitionsProp(), "1");
-        props.putIfAbsent(KafkaConfig.DefaultReplicationFactorProp(), "1");
-        props.putIfAbsent(KafkaConfig.MinInSyncReplicasProp(), "1");
-        props.putIfAbsent(KafkaConfig.TransactionsTopicReplicationFactorProp(), "1");
-        props.putIfAbsent(KafkaConfig.TransactionsTopicMinISRProp(), "1");
+        props.putIfAbsent(ReplicationConfigs.REPLICA_SOCKET_TIMEOUT_MS_CONFIG, "1000");
+        props.putIfAbsent(ReplicationConfigs.REPLICA_HIGH_WATERMARK_CHECKPOINT_INTERVAL_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(ReplicationConfigs.CONTROLLER_SOCKET_TIMEOUT_MS_CONFIG, "1000");
+        props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, Boolean.toString(false));
+        props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_RETRY_BACKOFF_MS_CONFIG, "100");
+        props.putIfAbsent(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, Boolean.toString(true));
+        props.putIfAbsent(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, Boolean.toString(true));
+        props.putIfAbsent(ServerLogConfigs.LOG_DELETE_DELAY_MS_CONFIG, "1000");
+        props.putIfAbsent(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, "2097152");
+        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
+        props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, "5");
+        props.putIfAbsent(GroupCoordinatorConfig.GROUP_INITIAL_REBALANCE_DELAY_MS_CONFIG, "0");
+        props.putIfAbsent(ServerLogConfigs.NUM_PARTITIONS_CONFIG, "1");
+        props.putIfAbsent(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, "1");
+        props.putIfAbsent(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_MIN_ISR_CONFIG, "1");
         return props;
     }
 

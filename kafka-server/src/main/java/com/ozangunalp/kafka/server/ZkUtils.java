@@ -7,6 +7,7 @@ import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.scram.internals.ScramCredentialUtils;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.server.config.ZkConfigs;
 import org.apache.zookeeper.client.ZKClientConfig;
 
 import kafka.server.KafkaConfig;
@@ -16,6 +17,9 @@ import kafka.zk.KafkaZkClient;
 import scala.Option;
 
 public class ZkUtils {
+
+    private ZkUtils() {
+    }
 
     public static void createScramUsersInZookeeper(KafkaConfig config, List<UserScramCredentialRecord> parsedCredentials) {
         if (!parsedCredentials.isEmpty()) {
@@ -40,9 +44,9 @@ public class ZkUtils {
     }
 
     private static boolean zkTlsClientAuthEnabled(ZKClientConfig zkClientConfig) {
-        return zooKeeperClientProperty(zkClientConfig, KafkaConfig.ZkSslClientEnableProp()).contains("true") &&
-                zooKeeperClientProperty(zkClientConfig, KafkaConfig.ZkClientCnxnSocketProp()).isDefined() &&
-                zooKeeperClientProperty(zkClientConfig, KafkaConfig.ZkSslKeyStoreLocationProp()).isDefined();
+        return zooKeeperClientProperty(zkClientConfig, ZkConfigs.ZK_SSL_CLIENT_ENABLE_CONFIG).contains("true") &&
+                zooKeeperClientProperty(zkClientConfig, ZkConfigs.ZK_CLIENT_CNXN_SOCKET_CONFIG).isDefined() &&
+                zooKeeperClientProperty(zkClientConfig, ZkConfigs.ZK_SSL_KEY_STORE_LOCATION_CONFIG).isDefined();
     }
 
     private static KafkaZkClient createZkClient(String name, Time time, KafkaConfig config, ZKClientConfig zkClientConfig) {
@@ -51,9 +55,9 @@ public class ZkUtils {
 
         if (secureAclsEnabled && !isZkSecurityEnabled)
             throw new java.lang.SecurityException(
-                    KafkaConfig.ZkEnableSecureAclsProp() + " is true, but ZooKeeper client TLS configuration identifying at least " +
-                            KafkaConfig.ZkSslClientEnableProp() + ", " + KafkaConfig.ZkClientCnxnSocketProp() + ", and " +
-                            KafkaConfig.ZkSslKeyStoreLocationProp() + " was not present and the verification of the JAAS login file failed " +
+                    ZkConfigs.ZK_ENABLE_SECURE_ACLS_CONFIG + " is true, but ZooKeeper client TLS configuration identifying at least " +
+                            ZkConfigs.ZK_SSL_CLIENT_ENABLE_CONFIG + ", " + ZkConfigs.ZK_CLIENT_CNXN_SOCKET_CONFIG + ", and " +
+                            ZkConfigs.ZK_SSL_KEY_STORE_LOCATION_CONFIG + " was not present and the verification of the JAAS login file failed " +
                             JaasUtils.zkSecuritySysConfigString());
 
         return KafkaZkClient.apply(config.zkConnect(), secureAclsEnabled, config.zkSessionTimeoutMs(), config.zkConnectionTimeoutMs(),
