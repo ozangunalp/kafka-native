@@ -75,6 +75,8 @@
         <kafka.version>3.8.0</kafka.version>
         <zookeeper.version>3.9.2</zookeeper.version>
         <scala.version>2.13.14</scala.version>
+        <!-- Synchronize with kafka_2.13 runtime dependency -->
+        <argparse4j.version>0.7.0</argparse4j.version>
 
         <strimzi-oauth.version>0.15.0</strimzi-oauth.version>
         <assertj.version>3.26.3</assertj.version>
@@ -150,6 +152,11 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-raft</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
             </dependency>
@@ -191,7 +198,7 @@
             <dependency>
                 <groupId>net.sourceforge.argparse4j</groupId>
                 <artifactId>argparse4j</artifactId>
-                <version>0.7.0</version>
+                <version>${argparse4j.version}</version>
             </dependency>
             <!-- This project -->
             <dependency>

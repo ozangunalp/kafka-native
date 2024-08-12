@@ -51,6 +51,10 @@
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-raft</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
     </dependency>
     <dependency>

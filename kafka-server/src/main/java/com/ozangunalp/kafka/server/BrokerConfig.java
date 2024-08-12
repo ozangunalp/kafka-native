@@ -18,11 +18,13 @@ import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
 import org.apache.kafka.coordinator.transaction.TransactionLogConfigs;
 import org.apache.kafka.network.SocketServerConfigs;
+import org.apache.kafka.raft.QuorumConfig;
 import org.apache.kafka.server.config.KRaftConfigs;
 import org.apache.kafka.server.config.ReplicationConfigs;
 import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
 import org.apache.kafka.server.config.ZkConfigs;
+import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
@@ -32,9 +34,6 @@ public final class BrokerConfig {
     static final Logger LOGGER = Logger.getLogger(BrokerConfig.class.getName());
 
     final static String CONFIG_PREFIX = "kafka";
-    public static final String PROCESS_ROLES = "process.roles";
-    public static final String CONTROLLER_QUORUM_VOTERS = "controller.quorum.voters";
-    public static final String LISTENERS = "listeners";
 
     private BrokerConfig() {
     }
@@ -82,13 +81,13 @@ public final class BrokerConfig {
         }
 
         boolean kraft = !props.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
-        boolean kraftController = !props.containsKey(PROCESS_ROLES) ||
-                Arrays.asList(props.getProperty(PROCESS_ROLES).split(",")).contains("controller");
+        boolean kraftController = !props.containsKey(KRaftConfigs.PROCESS_ROLES_CONFIG) ||
+                Arrays.asList(props.getProperty(KRaftConfigs.PROCESS_ROLES_CONFIG).split(",")).contains("controller");
         if (kraft) {
             // Configure kraft
-            props.putIfAbsent(PROCESS_ROLES, "broker,controller");
+            props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
             if (kraftController) {
-                props.putIfAbsent(CONTROLLER_QUORUM_VOTERS, brokerId + "@" + controller.host() + ":" + controller.port());
+                props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
             }
         }
 
@@ -98,7 +97,7 @@ public final class BrokerConfig {
         // - no listeners config
         if (!props.containsKey(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG)
                 && !props.containsKey(ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG)
-                && !props.containsKey(LISTENERS)) {
+                && !props.containsKey(SocketServerConfigs.LISTENERS_CONFIG)) {
             // Configure listeners
             List<String> earlyStartListeners = new ArrayList<>();
             earlyStartListeners.add(Endpoints.BROKER_PROTOCOL_NAME);
@@ -118,7 +117,7 @@ public final class BrokerConfig {
                 props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
             }
 
-            props.put(LISTENERS, joinListeners(listeners.values()));
+            props.put(SocketServerConfigs.LISTENERS_CONFIG, joinListeners(listeners.values()));
 
             // Configure internal listener
             props.put(ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG, Endpoints.listenerName(internal));
@@ -134,7 +133,7 @@ public final class BrokerConfig {
             LOGGER.warnf("Broker configs %s, %s, %s, %s will not be configured automatically, " +
                             "make sure to provide necessary configuration manually.",
                     KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG,
-                    LISTENERS,
+                    SocketServerConfigs.LISTENERS_CONFIG,
                     ReplicationConfigs.INTER_BROKER_LISTENER_NAME_CONFIG,
                     SocketServerConfigs.LISTENER_SECURITY_PROTOCOL_MAP_CONFIG);
         }
@@ -173,7 +172,7 @@ public final class BrokerConfig {
         props.putIfAbsent(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.LOG_DELETE_DELAY_MS_CONFIG, "1000");
-        props.putIfAbsent("log.cleaner.dedupe.buffer.size", "2097152");
+        props.putIfAbsent(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, "2097152");
         props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, "5");
