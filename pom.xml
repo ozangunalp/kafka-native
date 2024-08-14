@@ -76,7 +76,7 @@
         <zookeeper.version>3.9.2</zookeeper.version>
         <scala.version>2.13.14</scala.version>
         <!-- Synchronize with kafka_2.13 runtime dependency -->
-        <argparse4j.version>0.7.0</argparse4j.version>
+        <argparse4j.version>0.8.1</argparse4j.version>
 
         <strimzi-oauth.version>0.15.0</strimzi-oauth.version>
         <assertj.version>3.26.3</assertj.version>
