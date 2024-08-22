@@ -62,7 +62,7 @@
         <failsafe-plugin.version>3.4.0</failsafe-plugin.version>
         <release-plugin.version>3.1.1</release-plugin.version>
         <source-plugin.version>3.3.1</source-plugin.version>
-        <help-plugin.version>3.4.1</help-plugin.version>
+        <help-plugin.version>3.5.0</help-plugin.version>
         <javadoc-plugin.version>3.8.0</javadoc-plugin.version>
         <gpg-plugin.version>3.2.5</gpg-plugin.version>
         <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
