@@ -59,7 +59,7 @@
 
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <surefire-plugin.version>3.5.0</surefire-plugin.version>
-        <failsafe-plugin.version>3.4.0</failsafe-plugin.version>
+        <failsafe-plugin.version>3.5.0</failsafe-plugin.version>
         <release-plugin.version>3.1.1</release-plugin.version>
         <source-plugin.version>3.3.1</source-plugin.version>
         <help-plugin.version>3.5.0</help-plugin.version>
