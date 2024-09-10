@@ -5,6 +5,7 @@ import static org.objectweb.asm.Opcodes.PUTSTATIC;
 import static org.objectweb.asm.Opcodes.ACONST_NULL;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.security.auth.spi.LoginModule;
 
@@ -352,6 +353,17 @@ class KafkaServerExtensionProcessor {
                         visitMethodInsn(INVOKESTATIC, "org/slf4j/LoggerFactory", "getLogger", "(Ljava/lang/Class;)Lorg/slf4j/Logger;", false);
                         // Store the result in the LOGGER field
                         visitFieldInsn(PUTSTATIC, Type.getInternalName(LogSegment.class), "LOGGER", "Lorg/slf4j/Logger;");
+
+                        // Load the string "-future"
+                        visitLdcInsn("-future");
+                        visitFieldInsn(PUTSTATIC, Type.getInternalName(LogSegment.class), "FUTURE_DIR_SUFFIX", "Ljava/lang/String;");
+                        // Load the string "^(\\S+)-(\\S+)\\.(\\S+)-future"
+                        visitLdcInsn("^(\\S+)-(\\S+)\\.(\\S+)-future");
+                        // Call Pattern.compile with the string
+                        visitMethodInsn(INVOKESTATIC, Type.getInternalName(Pattern.class), "compile", "(Ljava/lang/String;)Ljava/util/regex/Pattern;", false);
+                        // Store the result in FUTURE_DIR_PATTERN
+                        visitFieldInsn(PUTSTATIC, Type.getInternalName(LogSegment.class), "FUTURE_DIR_PATTERN", Type.getDescriptor(Pattern.class));
+
                         // Load null onto the stack
                         visitInsn(ACONST_NULL);
                         // Store null into LOG_FLUSH_TIMER field
