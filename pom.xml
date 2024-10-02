@@ -63,7 +63,7 @@
         <release-plugin.version>3.1.1</release-plugin.version>
         <source-plugin.version>3.3.1</source-plugin.version>
         <help-plugin.version>3.5.0</help-plugin.version>
-        <javadoc-plugin.version>3.10.0</javadoc-plugin.version>
+        <javadoc-plugin.version>3.10.1</javadoc-plugin.version>
         <gpg-plugin.version>3.2.6</gpg-plugin.version>
         <nexus-staging-plugin.version>1.7.0</nexus-staging-plugin.version>
         <jreleaser-plugin.version>1.14.0</jreleaser-plugin.version>
