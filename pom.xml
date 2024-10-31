@@ -70,7 +70,7 @@
 
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.14.2</quarkus.platform.version>
+        <quarkus.platform.version>3.16.1</quarkus.platform.version>
 
         <kafka.version>3.8.0</kafka.version>
         <zookeeper.version>3.9.2</zookeeper.version>
