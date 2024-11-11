@@ -73,7 +73,7 @@
         <quarkus.platform.version>3.14.2</quarkus.platform.version>
 
         <kafka.version>3.8.0</kafka.version>
-        <zookeeper.version>3.9.2</zookeeper.version>
+        <zookeeper.version>3.9.3</zookeeper.version>
         <scala.version>2.13.14</scala.version>
         <!-- Synchronize with kafka_2.13 runtime dependency -->
         <argparse4j.version>0.7.0</argparse4j.version>
