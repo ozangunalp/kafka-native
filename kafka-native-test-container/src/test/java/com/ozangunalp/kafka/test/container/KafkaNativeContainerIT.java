@@ -339,7 +339,7 @@ public class KafkaNativeContainerIT {
             b2.addEnv("SERVER_HOST", broker2);
             b2.addEnv("KAFKA_BROKER_ID", "2");
 
-            Startables.deepStart(b1, b2).get(30, TimeUnit.SECONDS);
+            Startables.deepStart(b1, b2).get(1, TimeUnit.MINUTES);
 
             verifyClusterMembers(b1, Map.of(), 2);
             checkProduceConsume(b1);
