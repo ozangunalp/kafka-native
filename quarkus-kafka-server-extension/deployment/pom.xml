@@ -24,10 +24,6 @@
       <artifactId>quarkus-junit5-internal</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-        <groupId>org.apache.kafka</groupId>
-        <artifactId>kafka-metadata</artifactId>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
