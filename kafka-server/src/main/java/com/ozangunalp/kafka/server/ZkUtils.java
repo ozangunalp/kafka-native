@@ -79,7 +79,7 @@ public class ZkUtils {
             var storageFormatter = new Formatter();
             storageFormatter.setReleaseVersion(MetadataVersion.LATEST_PRODUCTION);
             storageFormatter.setScramArguments(scramCredentials);
-            var calcMetadataMethod = storageFormatter.getClass().getMethod("calculateBootstrapMetadata");
+            var calcMetadataMethod = storageFormatter.getClass().getDeclaredMethod("calculateBootstrapMetadata");
             calcMetadataMethod.setAccessible(true);
             var metadata = (BootstrapMetadata) calcMetadataMethod.invoke(storageFormatter);
             return metadata.records().stream()
