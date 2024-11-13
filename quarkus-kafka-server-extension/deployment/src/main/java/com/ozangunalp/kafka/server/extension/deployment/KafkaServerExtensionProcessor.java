@@ -144,6 +144,7 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
 
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.metadata.storage.Formatter.class).build());
     }
 
     @BuildStep
