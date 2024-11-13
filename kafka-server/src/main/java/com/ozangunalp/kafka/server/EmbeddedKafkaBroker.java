@@ -217,15 +217,13 @@ public class EmbeddedKafkaBroker implements Closeable {
         var zkMode = brokerConfig.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
         Server server;
 
-        var scramParser = new ScramParser();
-        var parsedCredentials = scramCredentials.stream().map(scramParser::parseScram).toList();
         if (zkMode) {
-            ZkUtils.createScramUsersInZookeeper(config, parsedCredentials);
+            ZkUtils.createScramUsersInZookeeper(config, scramCredentials);
             server = new KafkaServer(config, Time.SYSTEM, Option.apply(KAFKA_PREFIX), false);
         } else {
             // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
             var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(ReplicationConfigs.INTER_BROKER_PROTOCOL_VERSION_CONFIG, MetadataVersion.LATEST_PRODUCTION.version()));
-            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, parsedCredentials);
+            Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, scramCredentials);
             server = new KafkaRaftServer(config, Time.SYSTEM);
         }
         server.startup();
@@ -273,14 +271,14 @@ public class EmbeddedKafkaBroker implements Closeable {
     }
 
     public String getAdvertisedListeners() {
-        return StreamConverters.asJavaParStream(config.effectiveAdvertisedListeners())
+        return StreamConverters.asJavaParStream(config.effectiveAdvertisedBrokerListeners())
                 .map(EndPoint::connectionString)
                 .collect(Collectors.joining(","));
     }
 
     public List<String> getLogDirs() {
         return StreamConverters.asJavaParStream(config.logDirs())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public String getClusterId() {

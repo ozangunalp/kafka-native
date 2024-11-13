@@ -1,34 +1,41 @@
 package com.ozangunalp.kafka.server;
 
-import java.util.List;
-
+import kafka.server.KafkaConfig;
+import kafka.server.KafkaServer;
+import kafka.zk.AdminZkClient;
+import kafka.zk.KafkaZkClient;
 import org.apache.kafka.clients.admin.ScramMechanism;
 import org.apache.kafka.common.metadata.UserScramCredentialRecord;
 import org.apache.kafka.common.security.JaasUtils;
 import org.apache.kafka.common.security.scram.internals.ScramCredentialUtils;
 import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.metadata.bootstrap.BootstrapMetadata;
+import org.apache.kafka.metadata.storage.Formatter;
+import org.apache.kafka.server.common.ApiMessageAndVersion;
+import org.apache.kafka.server.common.MetadataVersion;
 import org.apache.kafka.server.config.ZkConfigs;
 import org.apache.zookeeper.client.ZKClientConfig;
-
-import kafka.server.KafkaConfig;
-import kafka.server.KafkaServer;
-import kafka.zk.AdminZkClient;
-import kafka.zk.KafkaZkClient;
 import scala.Option;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public class ZkUtils {
 
     private ZkUtils() {
     }
 
-    public static void createScramUsersInZookeeper(KafkaConfig config, List<UserScramCredentialRecord> parsedCredentials) {
-        if (!parsedCredentials.isEmpty()) {
+    public static void createScramUsersInZookeeper(KafkaConfig config, List<String> scramCredentials) {
+        if (!scramCredentials.isEmpty()) {
+
+            var scramCredentialRecords = buildUserScramCredentialRecords(scramCredentials);
+
             ZKClientConfig zkClientConfig = KafkaServer.zkClientConfigFromKafkaConfig(config, false);
             try (var zkClient = createZkClient("Kafka native", Time.SYSTEM, config, zkClientConfig)) {
                 var adminZkClient = new AdminZkClient(zkClient, Option.empty());
                 var userEntityType = "users";
 
-                parsedCredentials.forEach(uscr -> {
+                scramCredentialRecords.forEach(uscr -> {
                     var userConfig = adminZkClient.fetchEntityConfig(userEntityType, uscr.name());
                     var credentialsString = ScramCredentialUtils.credentialToString(ScramUtils.asScramCredential(uscr));
 
@@ -64,4 +71,26 @@ public class ZkUtils {
                 config.zkMaxInFlightRequests(), time, name, zkClientConfig,
                 "kafka.server", "SessionExpireListener", false, false);
     }
+
+    private static List<UserScramCredentialRecord> buildUserScramCredentialRecords(List<String> scramCredentials)  {
+        try {
+            // Kafka's API don't expose a mechanism to generate UserScramCredentialRecord directly.
+            // Best we can do it to use the KRaft's storage formatter and extract the records it would generate.
+            var storageFormatter = new Formatter();
+            storageFormatter.setReleaseVersion(MetadataVersion.LATEST_PRODUCTION);
+            storageFormatter.setScramArguments(scramCredentials);
+            var calcMetadataMethod = storageFormatter.getClass().getMethod("calculateBootstrapMetadata");
+            calcMetadataMethod.setAccessible(true);
+            var metadata = (BootstrapMetadata) calcMetadataMethod.invoke(storageFormatter);
+            return metadata.records().stream()
+                    .map(ApiMessageAndVersion::message)
+                    .filter(UserScramCredentialRecord.class::isInstance)
+                    .map(UserScramCredentialRecord.class::cast)
+                    .toList();
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("Failed to generate UserScramCredentialRecords", e);
+        }
+    }
+
+
 }

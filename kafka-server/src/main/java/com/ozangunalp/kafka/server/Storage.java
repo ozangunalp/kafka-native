@@ -6,23 +6,17 @@ import java.io.PrintStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.apache.kafka.common.metadata.FeatureLevelRecord;
-import org.apache.kafka.common.metadata.UserScramCredentialRecord;
-import org.apache.kafka.common.protocol.ApiMessage;
-import org.apache.kafka.metadata.bootstrap.BootstrapMetadata;
-import org.apache.kafka.metadata.properties.MetaProperties;
-import org.apache.kafka.server.common.ApiMessageAndVersion;
+import org.apache.kafka.metadata.storage.Formatter;
 import org.apache.kafka.server.common.MetadataVersion;
 import org.jboss.logging.Logger;
 
 import kafka.server.KafkaConfig;
 import kafka.tools.StorageTool;
-import scala.collection.immutable.Seq;
+import scala.jdk.javaapi.CollectionConverters;
 
 public final class Storage {
 
@@ -55,34 +49,28 @@ public final class Storage {
         }
     }
 
-    public static void formatStorageFromConfig(KafkaConfig config, String clusterId, boolean ignoreFormatted, MetadataVersion metadataVersion, List<UserScramCredentialRecord> scramCredentials) {
+    public static void formatStorageFromConfig(KafkaConfig config, String clusterId, boolean ignoreFormatted, MetadataVersion metadataVersion, List<String> scramCredentials) {
         if (!scramCredentials.isEmpty() && !metadataVersion.isScramSupported()) {
             throw new IllegalArgumentException("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
         }
-        Seq<String> directories = StorageTool.configToLogDirectories(config);
-        MetaProperties metaProperties = StorageTool.buildMetadataProperties(clusterId, config);
-        var metadataRecords = new ArrayList<ApiMessageAndVersion>();
-        metadataRecords.add(metadataVersionMessage(metadataVersion));
-        for (var scramCredential : scramCredentials) {
-            metadataRecords.add(scramMessage(scramCredential));
+        var controllerListenerName = CollectionConverters.asJava(config.controllerListenerNames()).stream().findFirst().orElseThrow();
+        var logDirs = CollectionConverters.asJava(StorageTool.configToLogDirectories(config));
+        var storageFormatter = new Formatter()
+                .setClusterId(clusterId)
+                .setNodeId(config.nodeId())
+                .setControllerListenerName(controllerListenerName)
+                .setMetadataLogDirectory(config.metadataLogDir())
+                .setDirectories(logDirs)
+                .setScramArguments(scramCredentials)
+                .setIgnoreFormatted(ignoreFormatted)
+                .setPrintStream(LoggingOutputStream.loggerPrintStream(LOGGER))
+                .setReleaseVersion(metadataVersion);
+
+        try {
+            storageFormatter.run();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to format storage", e);
         }
-        BootstrapMetadata bootstrapMetadata = BootstrapMetadata.fromRecords(metadataRecords, "kafka-native");
-        StorageTool.formatCommand(LoggingOutputStream.loggerPrintStream(LOGGER), directories, metaProperties,
-                bootstrapMetadata, metadataVersion, ignoreFormatted);
-    }
-
-    public static ApiMessageAndVersion withVersion(ApiMessage message) {
-        return new ApiMessageAndVersion(message, (short) 0);
-    }
-
-    private static ApiMessageAndVersion metadataVersionMessage(MetadataVersion metadataVersion) {
-        return withVersion(new FeatureLevelRecord().
-                setName(MetadataVersion.FEATURE_NAME).
-                setFeatureLevel(metadataVersion.featureLevel()));
-    }
-
-    private static ApiMessageAndVersion scramMessage(UserScramCredentialRecord scramRecord) {
-        return withVersion(scramRecord);
     }
 
     public static class LoggingOutputStream extends java.io.OutputStream {
