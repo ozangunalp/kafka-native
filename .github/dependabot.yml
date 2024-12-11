@@ -8,3 +8,8 @@ updates:
   target-branch: main
   reviewers:
   - ozangunalp
+  - k-wall
+- package-ecosystem: "github-actions"
+  directory: "/"
+  schedule:
+    interval: "weekly"
