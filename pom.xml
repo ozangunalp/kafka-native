@@ -79,7 +79,7 @@
         <argparse4j.version>0.7.0</argparse4j.version>
 
         <strimzi-oauth.version>0.15.0</strimzi-oauth.version>
-        <assertj.version>3.27.2</assertj.version>
+        <assertj.version>3.27.3</assertj.version>
     </properties>
 
     <distributionManagement>
