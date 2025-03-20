@@ -165,7 +165,8 @@ public final class BrokerConfig {
         props.putIfAbsent(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.LOG_DELETE_DELAY_MS_CONFIG, "1000");
         props.putIfAbsent(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, "2097152");
-        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_AFTER_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_BEFORE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, "5");
         props.putIfAbsent(GroupCoordinatorConfig.GROUP_INITIAL_REBALANCE_DELAY_MS_CONFIG, "0");
