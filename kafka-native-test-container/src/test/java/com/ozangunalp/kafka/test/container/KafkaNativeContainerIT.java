@@ -12,7 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.testcontainers.containers.ContainerLaunchException;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
+import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.lifecycle.Startables;
 import org.testcontainers.utility.MountableFile;
@@ -30,6 +32,8 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -145,13 +149,15 @@ public class KafkaNativeContainerIT {
 
     @Test
     void testSaslScramContainerNotSupported() {
+        StringBuilder log = new StringBuilder();
         try (var container = createKafkaNativeContainer()
                 .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
                 .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))
-                .withStartupTimeout(Duration.ofSeconds(10))
+                .withLogConsumer(outputFrame -> log.append(outputFrame.getUtf8String()))
+                .withStartupTimeout(Duration.ofSeconds(5))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             assertThatThrownBy(container::start).isInstanceOf(ContainerLaunchException.class);
-            assertThat(container.getLogs()).contains("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
+            assertThat(log).contains("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
         }
     }
 
