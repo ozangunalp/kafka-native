@@ -136,39 +136,5 @@ class BrokerConfigTest {
         assertThat(properties).containsEntry("listener.security.protocol.map", "JWT:SSL,BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT");
     }
 
-    @Test
-    void testZookeeperEmptyOverride() {
-        Properties props = new Properties();
-        props.put("zookeeper.connect", "localhost:2181");
-        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry("broker.id", "1");
-        assertThat(properties).doesNotContainKey("controller.quorum.voters");
-        assertThat(properties).doesNotContainKey("process.roles");
-        assertThat(properties).doesNotContainKey("controller.listener.names");
-        assertThat(properties).containsEntry("listeners", "BROKER://:9093,PLAINTEXT://:9092");
-        assertThat(properties).containsEntry("inter.broker.listener.name", "BROKER");
-        assertThat(properties).containsEntry("advertised.listeners", "PLAINTEXT://:9092,BROKER://:9093");
-        assertThat(properties).containsEntry("early.start.listeners", "BROKER");
-        assertThat(properties).containsEntry("listener.security.protocol.map", "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT");
-    }
 
-    @Test
-    void testZookeeperOverride() {
-        Properties props = new Properties();
-        props.put("zookeeper.connect", "localhost:2181");
-        props.put("advertised.listeners", "SSL://:9092");
-        props.put("listeners", "SSL://:9092");
-        props.put("inter.broker.listener.name", "SSL");
-        props.put("listener.security.protocol.map", "SSL:SSL");
-
-        Properties properties = BrokerConfig.defaultCoreConfig(props, "", 9092, 9093, 9094, PLAINTEXT);
-        assertThat(properties).containsEntry("broker.id", "1");
-        assertThat(properties).doesNotContainKey("controller.quorum.voters");
-        assertThat(properties).doesNotContainKey("process.roles");
-        assertThat(properties).doesNotContainKey("controller.listener.names");
-        assertThat(properties).containsEntry("listeners", "SSL://:9092");
-        assertThat(properties).containsEntry("inter.broker.listener.name", "SSL");
-        assertThat(properties).containsEntry("advertised.listeners", "SSL://:9092");
-        assertThat(properties).containsEntry("listener.security.protocol.map", "SSL:SSL");
-    }
 }

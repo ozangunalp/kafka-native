@@ -1,33 +1,32 @@
 package com.ozangunalp.kafka.server;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
-import org.apache.kafka.coordinator.transaction.TransactionLogConfigs;
+import org.apache.kafka.coordinator.transaction.TransactionLogConfig;
 import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.raft.QuorumConfig;
 import org.apache.kafka.server.config.KRaftConfigs;
 import org.apache.kafka.server.config.ReplicationConfigs;
 import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
-import org.apache.kafka.server.config.ZkConfigs;
 import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class BrokerConfig {
 
@@ -80,15 +79,12 @@ public final class BrokerConfig {
             props.put(ServerConfigs.BROKER_ID_CONFIG, brokerId);
         }
 
-        boolean kraft = !props.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
         boolean kraftController = !props.containsKey(KRaftConfigs.PROCESS_ROLES_CONFIG) ||
                 Arrays.asList(props.getProperty(KRaftConfigs.PROCESS_ROLES_CONFIG).split(",")).contains("controller");
-        if (kraft) {
-            // Configure kraft
-            props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
-            if (kraftController) {
-                props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
-            }
+        // Configure kraft
+        props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
+        if (kraftController) {
+            props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
         }
 
         // auto-configure listeners if
@@ -108,14 +104,12 @@ public final class BrokerConfig {
             listeners.put(Endpoints.listenerName(internal), internal);
 
             Map<String, Endpoint> securityProtocolMapListeners = new TreeMap<>(listeners);
-            if (kraft) {
-                if (kraftController) {
-                    earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
-                    listeners.put(Endpoints.listenerName(controller), controller);
-                }
-                securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
-                props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
+            if (kraftController) {
+                earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
+                listeners.put(Endpoints.listenerName(controller), controller);
             }
+            securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
+            props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
 
             props.put(SocketServerConfigs.LISTENERS_CONFIG, joinListeners(listeners.values()));
 
@@ -168,20 +162,20 @@ public final class BrokerConfig {
         props.putIfAbsent(ReplicationConfigs.REPLICA_HIGH_WATERMARK_CHECKPOINT_INTERVAL_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
         props.putIfAbsent(ReplicationConfigs.CONTROLLER_SOCKET_TIMEOUT_MS_CONFIG, "1000");
         props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, Boolean.toString(false));
-        props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_RETRY_BACKOFF_MS_CONFIG, "100");
         props.putIfAbsent(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.LOG_DELETE_DELAY_MS_CONFIG, "1000");
         props.putIfAbsent(CleanerConfig.LOG_CLEANER_DEDUPE_BUFFER_SIZE_PROP, "2097152");
-        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_DIFFERENCE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_AFTER_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
+        props.putIfAbsent(TopicConfig.MESSAGE_TIMESTAMP_BEFORE_MAX_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
         props.putIfAbsent(GroupCoordinatorConfig.OFFSETS_TOPIC_PARTITIONS_CONFIG, "5");
         props.putIfAbsent(GroupCoordinatorConfig.GROUP_INITIAL_REBALANCE_DELAY_MS_CONFIG, "0");
         props.putIfAbsent(ServerLogConfigs.NUM_PARTITIONS_CONFIG, "1");
         props.putIfAbsent(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, "1");
         props.putIfAbsent(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1");
-        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
-        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_MIN_ISR_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfig.TRANSACTIONS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfig.TRANSACTIONS_TOPIC_MIN_ISR_CONFIG, "1");
         return props;
     }
 
