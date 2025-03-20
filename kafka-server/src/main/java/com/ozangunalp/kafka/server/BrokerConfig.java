@@ -5,7 +5,6 @@ import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
-import org.apache.kafka.coordinator.transaction.TransactionLogConfigs;
 import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.raft.QuorumConfig;
 import org.apache.kafka.server.config.KRaftConfigs;
@@ -162,7 +161,6 @@ public final class BrokerConfig {
         props.putIfAbsent(ReplicationConfigs.REPLICA_HIGH_WATERMARK_CHECKPOINT_INTERVAL_MS_CONFIG, String.valueOf(Long.MAX_VALUE));
         props.putIfAbsent(ReplicationConfigs.CONTROLLER_SOCKET_TIMEOUT_MS_CONFIG, "1000");
         props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_ENABLE_CONFIG, Boolean.toString(false));
-        props.putIfAbsent(ServerConfigs.CONTROLLED_SHUTDOWN_RETRY_BACKOFF_MS_CONFIG, "100");
         props.putIfAbsent(ServerConfigs.DELETE_TOPIC_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.AUTO_CREATE_TOPICS_ENABLE_CONFIG, Boolean.toString(true));
         props.putIfAbsent(ServerLogConfigs.LOG_DELETE_DELAY_MS_CONFIG, "1000");
