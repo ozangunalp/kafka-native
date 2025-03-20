@@ -5,6 +5,7 @@ import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.coordinator.group.GroupCoordinatorConfig;
+import org.apache.kafka.coordinator.transaction.TransactionLogConfig;
 import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.raft.QuorumConfig;
 import org.apache.kafka.server.config.KRaftConfigs;
@@ -173,8 +174,8 @@ public final class BrokerConfig {
         props.putIfAbsent(ServerLogConfigs.NUM_PARTITIONS_CONFIG, "1");
         props.putIfAbsent(ReplicationConfigs.DEFAULT_REPLICATION_FACTOR_CONFIG, "1");
         props.putIfAbsent(TopicConfig.MIN_IN_SYNC_REPLICAS_CONFIG, "1");
-        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
-        props.putIfAbsent(TransactionLogConfigs.TRANSACTIONS_TOPIC_MIN_ISR_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfig.TRANSACTIONS_TOPIC_REPLICATION_FACTOR_CONFIG, "1");
+        props.putIfAbsent(TransactionLogConfig.TRANSACTIONS_TOPIC_MIN_ISR_CONFIG, "1");
         return props;
     }
 
