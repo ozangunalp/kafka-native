@@ -276,44 +276,6 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
-    void testZookeeperContainer() {
-        try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
-                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))
-                .withNetwork(Network.SHARED)
-                .withNetworkAliases("zookeeper")) {
-            zookeeper.start();
-            try (var container = createKafkaNativeContainer()
-                    .withNetwork(Network.SHARED)
-                    .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")) {
-                container.start();
-                checkProduceConsume(container);
-            }
-        }
-    }
-
-    @Test
-    void testZookeeperContainerWithScram() {
-        try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
-                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))
-                .withNetwork(Network.SHARED)
-                .withNetworkAliases("zookeeper")) {
-            zookeeper.start();
-            try (var container = createKafkaNativeContainer()
-                    .withNetwork(Network.SHARED)
-                    .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")
-                    .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
-                    .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
-                    .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
-                container.start();
-                checkProduceConsume(container, Map.of(
-                        CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
-                        SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
-                        SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";"));
-            }
-        }
-    }
-
-    @Test
     void testKraftClusterBothControllers() throws Exception {
         String clusterId = Uuid.randomUuid().toString();
         String broker1 = "broker1";

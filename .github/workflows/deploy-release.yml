@@ -66,9 +66,7 @@ jobs:
         run: |
           mvn -s .github/ci-maven-settings.xml -B clean verify -Dtest-container \
             -Dkafka-native-container-image=${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native \
-            -Dkafka-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }} \
-            -Dzookeeper-native-container-image=${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/zookeeper-native \
-            -Dzookeeper-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }}
+            -Dkafka-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }}
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -78,9 +76,6 @@ jobs:
       - name: Push kafka-native images
         working-directory: ${{ matrix.project.name }}
         run: "docker push -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native"
-      - name: Push zookeeper-native images
-        working-directory: ${{ matrix.project.name }}
-        run: "docker push -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/zookeeper-native"
 
   create-multiarch-manifest:
     needs: build
@@ -89,7 +84,6 @@ jobs:
       matrix:
         container:
           - kafka-native
-          - zookeeper-native
     permissions:
       contents: read
       packages: write
