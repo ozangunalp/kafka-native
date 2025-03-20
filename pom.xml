@@ -72,7 +72,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.16.2</quarkus.platform.version>
 
-        <kafka.version>3.9.0</kafka.version>
+        <kafka.version>4.0.0</kafka.version>
         <scala.version>2.13.14</scala.version>
         <!-- Synchronize with kafka_2.13 runtime dependency -->
         <argparse4j.version>0.7.0</argparse4j.version>
