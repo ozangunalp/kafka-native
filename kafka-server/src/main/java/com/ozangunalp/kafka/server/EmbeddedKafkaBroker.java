@@ -11,7 +11,6 @@ import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.network.SocketServerConfigs;
 import org.apache.kafka.server.common.MetadataVersion;
-import org.apache.kafka.server.config.ReplicationConfigs;
 import org.jboss.logging.Logger;
 import scala.jdk.javaapi.StreamConverters;
 
@@ -213,7 +212,7 @@ public class EmbeddedKafkaBroker implements Closeable {
         Server server;
 
         // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
-        var metadataVersion = MetadataVersion.fromVersionString(brokerConfig.getProperty(ReplicationConfigs.INTER_BROKER_PROTOCOL_VERSION_CONFIG, MetadataVersion.LATEST_PRODUCTION.version()));
+        var metadataVersion = MetadataVersion.fromVersionString(MetadataVersion.LATEST_PRODUCTION.version());
         Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, scramCredentials);
         server = new KafkaRaftServer(config, Time.SYSTEM);
         server.startup();
