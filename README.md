@@ -1,14 +1,12 @@
 # Kafka Native
 
-Kafka broker (and Zookeeper) compiled to native using Quarkus and GraalVM.
+Kafka broker compiled to native using Quarkus and GraalVM.
 
 ## Project Structure
 
 - `quarkus-kafka-server-extension`: Quarkus extension including for compiling Kafka Server to native using GraalVM.
-- `quarkus-zookeeper-server-extension`: Quarkus extension including for compiling Zookeeper Server to native using GraalVM.
 - `kafka-server`: Quarkus application starting a Kafka server using the kafka-server-extension. Compiles to JVM and native executable.
-- `zookeeper-server`: Quarkus application starting a Kafka server using the zookeeper-server-extension. Compiles to JVM and native executable.
-- `kafka-native-test-container`: Test containers starting a single-node Kafka broker using the native-compiled kafka-server and a single-node zookeeper using the native-compiled zookeeper-server. Includes integration tests.
+- `kafka-native-test-container`: Test containers starting a single-node Kafka broker using the native-compiled kafka-server. Includes integration tests.
 
 ## Building the project
 
@@ -27,19 +25,9 @@ mvn compile quarkus:dev
 Starts a single-node Kafka broker listening on `PLAINTEXT://9092`. 
 Uses `./target/log-dir` as log directory.
 
-## Running zookeeper in dev mode
-
-You can run zookeeper in dev mode that enables live coding using:
-```shell script
-cd zookeeper-server
-mvn compile quarkus:dev
-```
-
-Starts a single-node zookeeper listening on `2181`.
-
 ## Packaging and running the application
 
-The application can be packaged using the following on either the `kafka-server` (or `zookeeper-server`) directory:
+The application can be packaged using the following on either the `kafka-server` directory:
 ```shell script
 mvn package
 ```
@@ -50,7 +38,7 @@ The application is now runnable using `java -jar target/quarkus-app/quarkus-run.
 
 ## Creating native executables
 
-You can create a native executable using the following either the `kafka-server` (or `zookeeper-server`) directory:
+You can create a native executable using the following either the `kafka-server` directory:
 ```shell script
 mvn package -Pnative
 ```
@@ -60,7 +48,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 mvn package -Pnative -Dquarkus.native.container-build=true
 ```
 
-You can then execute your native executable with: `./target/kafka-server-1.0.0-SNAPSHOT-runner` (or `./target/zookeeper-server-1.0.0-SNAPSHOT-runner`)
+You can then execute your native executable with: `./target/kafka-server-1.0.0-SNAPSHOT-runner`
 
 ## Creating a container from native executable
 
@@ -69,7 +57,7 @@ You can create a container from the native executable using:
 mvn package -Dnative -Dquarkus.native.container-build=true -Dquarkus.container-image.build=true
 ```
 
-The container images will be built with tags `quay.io/ogunalp/kafka-native:1.0.0-SNAPSHOT` and `quay.io/ogunalp/zookeeper-native:1.0.0-SNAPSHOT`
+The container images will be built with tag `quay.io/ogunalp/kafka-native:1.0.0-SNAPSHOT`.
 
 If you want to reuse the existing native executable:
 
@@ -103,7 +91,6 @@ Following configuration options are available:
 | `server.auto-configure `      | Automatically configure server properties, if false only `server.properties` is respected | true               |
 | `kafka.log.dir`               | Path to `log-dir` directory, will create the directory if                                 | `./target/log-dir` |
 | `kafka.advertised.listeners`  | Override `advertised.listeners`                                                           |                    |
-| `kafka.zookeeper.connect`     | When configured the kafka broker starts in zookeeper mode                                 | ``                 |
 | `kafka.*`                     | Override broker properties                                                                |                    |
 
 

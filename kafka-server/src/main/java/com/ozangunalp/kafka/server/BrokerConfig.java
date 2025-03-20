@@ -1,16 +1,5 @@
 package com.ozangunalp.kafka.server;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Properties;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.apache.kafka.common.Endpoint;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
@@ -23,11 +12,21 @@ import org.apache.kafka.server.config.KRaftConfigs;
 import org.apache.kafka.server.config.ReplicationConfigs;
 import org.apache.kafka.server.config.ServerConfigs;
 import org.apache.kafka.server.config.ServerLogConfigs;
-import org.apache.kafka.server.config.ZkConfigs;
 import org.apache.kafka.storage.internals.log.CleanerConfig;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.logging.Logger;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class BrokerConfig {
 
@@ -80,15 +79,12 @@ public final class BrokerConfig {
             props.put(ServerConfigs.BROKER_ID_CONFIG, brokerId);
         }
 
-        boolean kraft = !props.containsKey(ZkConfigs.ZK_CONNECT_CONFIG);
         boolean kraftController = !props.containsKey(KRaftConfigs.PROCESS_ROLES_CONFIG) ||
                 Arrays.asList(props.getProperty(KRaftConfigs.PROCESS_ROLES_CONFIG).split(",")).contains("controller");
-        if (kraft) {
-            // Configure kraft
-            props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
-            if (kraftController) {
-                props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
-            }
+        // Configure kraft
+        props.putIfAbsent(KRaftConfigs.PROCESS_ROLES_CONFIG, "broker,controller");
+        if (kraftController) {
+            props.putIfAbsent(QuorumConfig.QUORUM_VOTERS_CONFIG, brokerId + "@" + controller.host() + ":" + controller.port());
         }
 
         // auto-configure listeners if
@@ -108,14 +104,12 @@ public final class BrokerConfig {
             listeners.put(Endpoints.listenerName(internal), internal);
 
             Map<String, Endpoint> securityProtocolMapListeners = new TreeMap<>(listeners);
-            if (kraft) {
-                if (kraftController) {
-                    earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
-                    listeners.put(Endpoints.listenerName(controller), controller);
-                }
-                securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
-                props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
+            if (kraftController) {
+                earlyStartListeners.add(Endpoints.CONTROLLER_PROTOCOL_NAME);
+                listeners.put(Endpoints.listenerName(controller), controller);
             }
+            securityProtocolMapListeners.put(Endpoints.listenerName(controller), controller);
+            props.put(KRaftConfigs.CONTROLLER_LISTENER_NAMES_CONFIG, Endpoints.listenerName(controller));
 
             props.put(SocketServerConfigs.LISTENERS_CONFIG, joinListeners(listeners.values()));
 
