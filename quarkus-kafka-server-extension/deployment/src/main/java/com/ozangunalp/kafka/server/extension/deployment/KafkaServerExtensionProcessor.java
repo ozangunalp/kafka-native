@@ -142,6 +142,7 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedRemoteFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.server.metrics.KafkaYammerMetrics"));
 
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());
     }
@@ -217,6 +218,8 @@ class KafkaServerExtensionProcessor {
         }
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.jgss.GSSContextImpl").methods().fields().build());
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("org.apache.kafka.common.network.ListenerName[]").unsafeAllocated().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("kafka.network.DataPlaneAcceptor[]").unsafeAllocated().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.provider.ConfigFile").build());
     }
 
     @BuildStep
