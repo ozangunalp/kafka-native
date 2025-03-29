@@ -142,6 +142,7 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedProduceMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedRemoteFetchMetrics$"));
         producer.produce(new RuntimeInitializedClassBuildItem("kafka.server.DelayedDeleteRecordsMetrics$"));
+        producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.server.metrics.KafkaYammerMetrics"));
 
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());
     }
@@ -168,16 +169,6 @@ class KafkaServerExtensionProcessor {
                 "org.keycloak.jose.jwk.JWK",
                 "org.keycloak.json.StringOrArrayDeserializer",
                 "org.keycloak.json.StringListMapDeserializer").methods().fields().build());
-    }
-
-    @BuildStep
-    private void zookeeper(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-            BuildProducer<RuntimeInitializedClassBuildItem> producer) {
-        producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.admin.AdminUtils"));
-        reflectiveClass.produce(ReflectiveClassBuildItem.builder(
-                "sun.security.provider.ConfigFile",
-                "org.apache.zookeeper.ClientCnxnSocketNIO")
-                .methods().fields().build());
     }
 
     @BuildStep
@@ -227,6 +218,8 @@ class KafkaServerExtensionProcessor {
         }
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.jgss.GSSContextImpl").methods().fields().build());
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("org.apache.kafka.common.network.ListenerName[]").unsafeAllocated().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("kafka.network.DataPlaneAcceptor[]").unsafeAllocated().build());
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.provider.ConfigFile").build());
     }
 
     @BuildStep
