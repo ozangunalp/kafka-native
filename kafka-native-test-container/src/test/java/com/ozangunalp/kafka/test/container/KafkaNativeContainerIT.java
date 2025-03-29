@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.server.common.MetadataVersion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +124,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testMinimumMetadataVersion() {
         try (var container = createKafkaNativeContainer()
-                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))) {
+                .withEnv("SERVER_STORAGE_METADATA_VERSION", MetadataVersion.MINIMUM_VERSION.version())) {
             container.start();
             checkProduceConsume(container);
         }
@@ -147,7 +148,7 @@ public class KafkaNativeContainerIT {
     void testSaslScramContainerNotSupported() {
         try (var container = createKafkaNativeContainer()
                 .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
-                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))
+                .withEnv("SERVER_STORAGE_METADATA_VERSION", "3.3-IV0")  // Too old for SCRAM
                 .withStartupTimeout(Duration.ofSeconds(10))
                 .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
             assertThatThrownBy(container::start).isInstanceOf(ContainerLaunchException.class);

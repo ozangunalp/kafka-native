@@ -43,6 +43,7 @@ public class EmbeddedKafkaBroker implements Closeable {
     private int controllerPort = 0;
     private boolean deleteDirsOnClose = true;
     private String clusterId = Uuid.randomUuid().toString();
+    private String storageMetadataVersion = MetadataVersion.LATEST_PRODUCTION.version();
     private final Properties brokerConfig = new Properties();
     public SecurityProtocol defaultProtocol = PLAINTEXT;
     private boolean autoConfigure = true;
@@ -134,6 +135,18 @@ public class EmbeddedKafkaBroker implements Closeable {
         return this;
     }
 
+   /**
+     * Configure the metadata version for the broker storage dirs.
+     *
+     * @param storageMetadataVersion the cluster id.
+     * @return this {@link EmbeddedKafkaBroker}
+     */
+    public EmbeddedKafkaBroker withStorageMetadataVersion(String storageMetadataVersion) {
+        assertNotRunning();
+        this.storageMetadataVersion = storageMetadataVersion;
+        return this;
+    }
+
     /**
      * Configure the list of scram credentials for the broker.
      *
@@ -211,8 +224,7 @@ public class EmbeddedKafkaBroker implements Closeable {
         this.config = KafkaConfig.fromProps(brokerConfig, false);
         Server server;
 
-        // Default the metadata version from the IBP version in the same way as kafka.tools.StorageTool.
-        var metadataVersion = MetadataVersion.fromVersionString(MetadataVersion.LATEST_PRODUCTION.version());
+        var metadataVersion = MetadataVersion.fromVersionString(storageMetadataVersion);
         Storage.formatStorageFromConfig(config, clusterId, true, metadataVersion, scramCredentials);
         server = new KafkaRaftServer(config, Time.SYSTEM);
         server.startup();
