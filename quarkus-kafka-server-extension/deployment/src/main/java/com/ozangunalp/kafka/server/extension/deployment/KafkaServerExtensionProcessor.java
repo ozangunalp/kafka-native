@@ -105,6 +105,7 @@ class KafkaServerExtensionProcessor {
 
     private static final DotName KAFKA_PRINCIPAL_BUILDER = DotName.createSimple(KafkaPrincipalBuilder.class.getName());
     private static final DotName PARTITION_ASSIGNOR = DotName.createSimple(PartitionAssignor.class.getName());
+    private static final DotName STATE_PERSISTER = DotName.createSimple(org.apache.kafka.server.share.persister.Persister.class.getName());
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -220,6 +221,9 @@ class KafkaServerExtensionProcessor {
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("org.apache.kafka.common.network.ListenerName[]").unsafeAllocated().build());
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("kafka.network.DataPlaneAcceptor[]").unsafeAllocated().build());
         reflectiveClass.produce(ReflectiveClassBuildItem.builder("sun.security.provider.ConfigFile").build());
+        for (ClassInfo login : index.getIndex().getAllKnownImplementors(STATE_PERSISTER)) {
+            reflectiveClass.produce(ReflectiveClassBuildItem.builder(login.name().toString()).build());
+        }
     }
 
     @BuildStep
