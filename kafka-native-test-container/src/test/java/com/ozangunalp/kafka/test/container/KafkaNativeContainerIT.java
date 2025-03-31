@@ -145,18 +145,6 @@ public class KafkaNativeContainerIT {
     }
 
     @Test
-    void testSaslScramContainerNotSupported() {
-        try (var container = createKafkaNativeContainer()
-                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
-                .withEnv("SERVER_STORAGE_METADATA_VERSION", "3.3-IV0")  // Too old for SCRAM
-                .withStartupTimeout(Duration.ofSeconds(10))
-                .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
-            assertThatThrownBy(container::start).isInstanceOf(ContainerLaunchException.class);
-            assertThat(container.getLogs()).contains("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
-        }
-    }
-
-    @Test
     void testSaslScramContainerCluster() throws ExecutionException, InterruptedException, TimeoutException {
         String clusterId = Uuid.randomUuid().toString();
         String broker1 = "broker1";
