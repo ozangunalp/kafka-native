@@ -1,17 +1,9 @@
 package com.ozangunalp.kafka.server.extension.runtime;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.metrics.JmxReporter;
-import org.apache.kafka.common.metrics.KafkaMetric;
-import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.record.FileRecords;
-import org.apache.kafka.common.utils.AppInfoParser;
-import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.server.metrics.KafkaMetricsGroup;
 import org.apache.kafka.storage.internals.log.OffsetIndex;
 import org.apache.kafka.storage.internals.log.TimeIndex;
@@ -21,50 +13,6 @@ import com.oracle.svm.core.annotate.Alias;
 import com.oracle.svm.core.annotate.Delete;
 import com.oracle.svm.core.annotate.Substitute;
 import com.oracle.svm.core.annotate.TargetClass;
-
-@TargetClass(value = AppInfoParser.class)
-final class RemoveJMXAccess {
-
-    @Substitute
-    public static synchronized void registerAppInfo(String prefix, String id, Metrics metrics, long nowMs) {
-
-    }
-
-    @Substitute
-    public static synchronized void unregisterAppInfo(String prefix, String id, Metrics metrics) {
-
-    }
-
-}
-
-@TargetClass(value = JmxReporter.class)
-final class JMXReporting {
-
-    @Substitute
-    public void reconfigure(Map<String, ?> configs) {
-
-    }
-
-    @Substitute
-    public void init(List<KafkaMetric> metrics) {
-
-    }
-
-    @Substitute
-    public void metricChange(KafkaMetric metric) {
-
-    }
-
-    @Substitute
-    public void metricRemoval(KafkaMetric metric) {
-
-    }
-
-    @Substitute
-    public void close() {
-    }
-
-}
 
 @TargetClass(className = "kafka.server.DelayedRemoteListOffsetsMetrics$")
 final class Target_DelayedRemoteListOffsetsMetrics {
@@ -79,26 +27,6 @@ final class Target_DelayedRemoteListOffsetsMetrics {
     void recordExpiration(TopicPartition topicPartition) {
 
     }
-}
-
-@TargetClass(className = "org.apache.kafka.storage.internals.log.LogConfig")
-final class Target_LogConfig {
-
-    @Alias
-    public long segmentMs;
-
-    @Alias
-    public long segmentJitterMs;
-
-    @Substitute
-    public long randomSegmentJitter() {
-        if (segmentJitterMs == 0) {
-            return 0;
-        } else {
-            return Utils.abs(new Random().nextInt()) % Math.min(segmentJitterMs, segmentMs);
-        }
-    }
-
 }
 
 @TargetClass(className = "com.yammer.metrics.core.Timer")
