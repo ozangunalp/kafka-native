@@ -91,7 +91,7 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
       - uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
           cache: maven
       - name: Set Release Version & Image Tags
@@ -136,7 +136,7 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
       - uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
           cache: maven
           server-id: ossrh
