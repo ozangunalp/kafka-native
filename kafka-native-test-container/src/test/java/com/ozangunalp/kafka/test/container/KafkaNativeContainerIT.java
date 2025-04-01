@@ -7,6 +7,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.server.common.MetadataVersion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +124,7 @@ public class KafkaNativeContainerIT {
     @Test
     void testMinimumMetadataVersion() {
         try (var container = createKafkaNativeContainer()
-                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))) {
+                .withEnv("SERVER_STORAGE_METADATA_VERSION", MetadataVersion.MINIMUM_VERSION.version())) {
             container.start();
             checkProduceConsume(container);
         }
@@ -140,18 +141,6 @@ public class KafkaNativeContainerIT {
                     CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
                     SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
                     SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";"));
-        }
-    }
-
-    @Test
-    void testSaslScramContainerNotSupported() {
-        try (var container = createKafkaNativeContainer()
-                .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
-                .withServerProperties(MountableFile.forClasspathResource("metadata_version_3.3.properties"))
-                .withStartupTimeout(Duration.ofSeconds(10))
-                .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
-            assertThatThrownBy(container::start).isInstanceOf(ContainerLaunchException.class);
-            assertThat(container.getLogs()).contains("SCRAM is only supported in metadataVersion IBP_3_5_IV2 or later.");
         }
     }
 
@@ -271,44 +260,6 @@ public class KafkaNativeContainerIT {
                                 "principal=\"client/localhost@EXAMPLE.COM\";",
                         SaslConfigs.SASL_KERBEROS_SERVICE_NAME, "kafka",
                         SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG, "https"));
-            }
-        }
-    }
-
-    @Test
-    void testZookeeperContainer() {
-        try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
-                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))
-                .withNetwork(Network.SHARED)
-                .withNetworkAliases("zookeeper")) {
-            zookeeper.start();
-            try (var container = createKafkaNativeContainer()
-                    .withNetwork(Network.SHARED)
-                    .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")) {
-                container.start();
-                checkProduceConsume(container);
-            }
-        }
-    }
-
-    @Test
-    void testZookeeperContainerWithScram() {
-        try (ZookeeperNativeContainer zookeeper = new ZookeeperNativeContainer()
-                .withFollowOutput(c -> new ToFileConsumer(testOutputName, c))
-                .withNetwork(Network.SHARED)
-                .withNetworkAliases("zookeeper")) {
-            zookeeper.start();
-            try (var container = createKafkaNativeContainer()
-                    .withNetwork(Network.SHARED)
-                    .withArgs("-Dkafka.zookeeper.connect=zookeeper:2181")
-                    .withEnv("SERVER_SCRAM_CREDENTIALS", "SCRAM-SHA-512=[name=client,password=client-secret]")
-                    .withServerProperties(MountableFile.forClasspathResource("sasl_scram_plaintext.properties"))
-                    .withAdvertisedListeners(c -> String.format("SASL_PLAINTEXT://%s:%s", c.getHost(), c.getExposedKafkaPort()))) {
-                container.start();
-                checkProduceConsume(container, Map.of(
-                        CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SASL_PLAINTEXT",
-                        SaslConfigs.SASL_MECHANISM, "SCRAM-SHA-512",
-                        SaslConfigs.SASL_JAAS_CONFIG, "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"client\" password=\"client-secret\";"));
             }
         }
     }

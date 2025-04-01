@@ -51,4 +51,6 @@ public interface ServerConfig {
                 .orElse(Collections.emptyList());
     }
 
+    /** Metadata version used for the Kafka storage. */
+    Optional<String> storageMetadataVersion();
 }

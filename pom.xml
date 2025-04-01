@@ -51,8 +51,8 @@
 
     <properties>
         <maven.compiler.parameters>true</maven.compiler.parameters>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -72,8 +72,7 @@
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
         <quarkus.platform.version>3.16.2</quarkus.platform.version>
 
-        <kafka.version>3.9.0</kafka.version>
-        <zookeeper.version>3.9.3</zookeeper.version>
+        <kafka.version>4.0.0</kafka.version>
         <scala.version>2.13.14</scala.version>
         <!-- Synchronize with kafka_2.13 runtime dependency -->
         <argparse4j.version>0.7.0</argparse4j.version>
@@ -95,9 +94,7 @@
 
     <modules>
         <module>quarkus-kafka-server-extension</module>
-        <module>quarkus-zookeeper-server-extension</module>
         <module>kafka-server</module>
-        <module>zookeeper-server</module>
         <module>kafka-native-test-container</module>
     </modules>
 
@@ -191,11 +188,6 @@
                 <version>${strimzi-oauth.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${zookeeper.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>net.sourceforge.argparse4j</groupId>
                 <artifactId>argparse4j</artifactId>
                 <version>${argparse4j.version}</version>
@@ -208,27 +200,12 @@
             </dependency>
             <dependency>
                 <groupId>com.ozangunalp</groupId>
-                <artifactId>quarkus-zookeeper-server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.ozangunalp</groupId>
                 <artifactId>kafka-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.ozangunalp</groupId>
-                <artifactId>zookeeper-server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.ozangunalp</groupId>
                 <artifactId>quarkus-kafka-server-deployment</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.ozangunalp</groupId>
-                <artifactId>quarkus-zookeeper-server-deployment</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

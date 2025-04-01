@@ -28,7 +28,7 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
       - uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: temurin
           cache: maven
       - name: Set Release Version & Image Tags
@@ -69,9 +69,7 @@ jobs:
         run: |
           mvn -s .github/ci-maven-settings.xml -B clean verify -Dtest-container \
             -Dkafka-native-container-image=${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native \
-            -Dkafka-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }} \
-            -Dzookeeper-native-container-image=${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/zookeeper-native \
-            -Dzookeeper-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }}
+            -Dkafka-native-container-version=${{ env.BUILD_IMAGE_TAG }}-${{ matrix.arch }}
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -81,22 +79,14 @@ jobs:
       - name: Push kafka-native images
         working-directory: ${{ matrix.project.name }}
         run: "docker push -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native"
-      - name: Push zookeeper-native images
-        working-directory: ${{ matrix.project.name }}
-        run: "docker push -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/zookeeper-native"
 
   create-multiarch-manifest:
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        container:
-          - kafka-native
-          - zookeeper-native
     permissions:
       contents: read
       packages: write
-    name: Create Multiarch Docker Images for ${{ matrix.container }}
+    name: Create Multiarch Docker Images for kafka-native
     steps:
       - uses: actions/checkout@v4
         with:
@@ -123,14 +113,14 @@ jobs:
           registry: ${{ env.CONTAINER_REGISTRY }}
           username: ${{ secrets.QUAY_USERNAME }} # ${{ github.actor }}
           password: ${{ secrets.QUAY_ROBOT_TOKEN }} # ${{ secrets.GITHUB_TOKEN }}
-      - name: Create and push multi-arch manifests ${{ matrix.container }}
+      - name: Create and push multi-arch manifests kafka-native
         shell: bash
         run: |
-          docker manifest create ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.BUILD_IMAGE_TAG }} \
-            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.BUILD_IMAGE_TAG }}-amd64 \
-            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.BUILD_IMAGE_TAG }}-arm64
-          docker manifest push ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.BUILD_IMAGE_TAG }}
-          docker manifest create ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.LATEST_IMAGE_TAG }} \
-            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.LATEST_IMAGE_TAG }}-amd64 \
-            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.LATEST_IMAGE_TAG }}-arm64
-          docker manifest push ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/${{ matrix.container }}:${{ env.LATEST_IMAGE_TAG }}
+          docker manifest create ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.BUILD_IMAGE_TAG }} \
+            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.BUILD_IMAGE_TAG }}-amd64 \
+            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.BUILD_IMAGE_TAG }}-arm64
+          docker manifest push ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.BUILD_IMAGE_TAG }}
+          docker manifest create ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.LATEST_IMAGE_TAG }} \
+            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.LATEST_IMAGE_TAG }}-amd64 \
+            -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.LATEST_IMAGE_TAG }}-arm64
+          docker manifest push ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native:${{ env.LATEST_IMAGE_TAG }}

@@ -35,6 +35,7 @@ public class Startup {
                             properties.putAll(Utils.loadProps(file.toFile().getAbsolutePath()))));
                 });
         config.clusterId().ifPresent(id -> broker.withClusterId(id));
+        config.storageMetadataVersion().ifPresent(storageMetadataVersion -> broker.withStorageMetadataVersion(storageMetadataVersion));
         broker.start();
     }
 
