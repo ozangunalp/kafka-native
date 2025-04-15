@@ -77,7 +77,7 @@
         <!-- Synchronize with kafka_2.13 runtime dependency -->
         <argparse4j.version>0.7.0</argparse4j.version>
 
-        <strimzi-oauth.version>0.16.0</strimzi-oauth.version>
+        <strimzi-oauth.version>0.16.1</strimzi-oauth.version>
         <assertj.version>3.27.3</assertj.version>
     </properties>
 
