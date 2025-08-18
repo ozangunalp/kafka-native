@@ -22,7 +22,7 @@ jobs:
       packages: write
     name: Build Docker Images for ${{ matrix.arch }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.RELEASE_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
       packages: write
     name: Create Multiarch Docker Images for kafka-native
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.RELEASE_TOKEN }}
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Release to Maven Central
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.inputs.branch }}
           token: ${{ secrets.RELEASE_TOKEN }}
