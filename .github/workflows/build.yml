@@ -74,7 +74,7 @@ jobs:
         run: "docker push -a ${{ env.CONTAINER_REGISTRY }}/${{ env.CONTAINER_GROUP }}/kafka-native"
       - name: Upload artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: integration-test-logs
           retention-days: 3
