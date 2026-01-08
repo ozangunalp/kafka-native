@@ -146,6 +146,9 @@ class KafkaServerExtensionProcessor {
         producer.produce(new RuntimeInitializedClassBuildItem("org.apache.kafka.server.metrics.KafkaYammerMetrics"));
 
         reflectiveClass.produce(ReflectiveClassBuildItem.builder(org.apache.kafka.common.metrics.JmxReporter.class).build());
+
+        // Enable reflection for the StandardAuthorizer to support using ACLs
+        reflectiveClass.produce(ReflectiveClassBuildItem.builder("org.apache.kafka.metadata.authorizer.StandardAuthorizer").build());
     }
 
     @BuildStep
